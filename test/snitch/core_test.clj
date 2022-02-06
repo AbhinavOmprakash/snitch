@@ -1,7 +1,7 @@
 (ns snitch.core-test
   (:require
     [clojure.test :refer :all]
-    [snitch.core :refer [concat-symbols arg->def-args define-args define-let-bindings defn*]]
+    [snitch.core :refer [concat-symbols arg->def-args define-args define-let-bindings defn* defn** defn***]]
     [snitch.test-utils]))
 
 
@@ -20,6 +20,7 @@
   (testing "simple symbol"
     (is (expansion-valid? (arg->def-args "" 'a) (def a a)))
     (is (expansion-valid? (arg->def-args "*" 'a) (def a* a)))
+    (is (expansion-valid? (arg->def-args  'fname "*" 'a) (def fname-a* a)))
     (is (expansion-valid? (arg->def-args  "fname" "*" 'a) (def fname-a* a))))
 
 
@@ -188,20 +189,130 @@
 
 
 (deftest test-defn*
-  (is (macro-valid? (defn* hey [x]
-                      (print x))
-                    (clojure.core/defn hey
-                      [x]
-                      (def x x) (print x))))
-  (is (macro-valid? (defn* hey [x]
-                      (let [y 2]
-                        (print x)))
-                    (clojure.core/defn hey
-                      [x]
-                      (def x x) 
-                      (let [y 2] 
-                        (def y y) 
-                        (print x))))))
+  (testing "defn with name, params and body"
+    (is (macro-valid? (defn* hey [x]
+                        (print x))
+                      (clojure.core/defn hey
+                        [x]
+                        (def x x) (print x))))
+    (is (macro-valid? (defn* hey [x]
+                        (let [y 2]
+                          (print x)))
+                      (clojure.core/defn hey
+                        [x]
+                        (def x x)
+                        (let [y 2]
+                          (def y y)
+                          (print x))))))
+  (testing "defn with variadic args"
+    (is (macro-valid? (defn* hey
+                        ([a] a)
+                        ([a b] [a b]))
+                      (clojure.core/defn hey
+                        ([a]
+                         (def a a)
+                         a)
+                        ([a b]
+                         (def a a)
+                         (def b b)
+                         [a b])))))
+
+  (testing "defn with docstrings"
+    (is (macro-valid? (defn* hey
+                        "prints x"
+                        [x]
+                        (let [y 2]
+                          (print x)))
+                      (clojure.core/defn hey
+                        "prints x"
+                        [x]
+                        (def x x)
+                        (let [y 2] (def y y) (print x)))))
+    (is (macro-valid? (defn* hey
+                        "prints x"
+                        ([x]
+                         x)
+                        ([x y] [x y]))
+                      (clojure.core/defn hey
+                        "prints x"
+                        ([x] (def x x) x)
+                        ([x y] (def x x) (def y y) [x y])))))
+
+  (testing "defn with docstrings, attr-maps, and prepost-maps."
+    (is (macro-valid? (defn* hey
+                        "prints x"
+                        {:added 1.0}
+                        [x]
+                        (let [y 2]
+                          (print x)))
+                      (clojure.core/defn hey
+                        "prints x"
+                        {:added 1.0}
+                        [x]
+                        (def x x)
+                        (let [y 2] (def y y) (print x)))))
+    (is (macro-valid? (defn* hey
+                        "prints x"
+                        {:added 1.0}
+                        [x]
+                        {:pre []
+                         :post []}
+                        (let [y 2]
+                          (print x)))
+                      (clojure.core/defn hey
+                        "prints x"
+                        {:added 1.0}
+                        [x]
+                        {:pre [], :post []}
+                        (def x x)
+                        (let [y 2] (def y y) (print x)))))))
 
 
-;; test with variadic defns
+(deftest test-defn**
+  (testing "defn** with name, params and body"
+    (is (macro-valid? (defn** hey [x]
+                        (print x))
+                      (clojure.core/defn hey
+                        [x]
+                        (def x* x) (print x))))
+    (is (macro-valid? (defn** hey [x]
+                        (let [y 2]
+                          (print x)))
+                      (clojure.core/defn hey
+                        [x]
+                        (def x* x)
+                        (let [y 2]
+                          (def y- y)
+                          (print x))))))
+
+  (testing "defn** with variadic args"
+    (is (macro-valid? (defn** hey
+                        ([a] a)
+                        ([a b] [a b]))
+                      (clojure.core/defn hey
+                        ([a] (def a* a) a)
+                        ([a b] (def a* a) (def b* b) [a b]))))))
+
+
+(deftest test-defn***
+  (testing "defn*** with name, params and body"
+    (is (macro-valid? (defn*** hey [x]
+                        (print x))
+                      (clojure.core/defn hey
+                        [x]
+                        (def hey-x* x) (print x))))
+    (is (macro-valid? (defn*** hey [x]
+                        (let [y 2]
+                          (print x)))
+                      (clojure.core/defn hey
+                        [x]
+                        (def hey-x* x)
+                        (let [y 2] (def hey-y- y) (print x))))))
+
+  (testing "defn*** with variadic args"
+    (is (macro-valid? (defn*** hey
+                        ([a] a)
+                        ([a b] [a b]))
+                      (clojure.core/defn hey
+                        ([a] (def hey-a* a) a)
+                        ([a b] (def hey-a* a) (def hey-b* b) [a b]))))))
