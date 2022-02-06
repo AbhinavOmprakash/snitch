@@ -17,8 +17,8 @@ jobs:
       run: lein deps
     - name: Run tests
       run: lein test
-    - name: coverage
-      run: lein cloverage --codecov
+#     - name: coverage
+#       run: lein cloverage --codecov
 #     - name: Upload coverage to Codecov
 #       uses: codecov/codecov-action@v1
 #       with:
