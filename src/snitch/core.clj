@@ -26,7 +26,11 @@
   ([suffix arg]
    (arg->def-args "" suffix arg))
   ([prefix suffix arg]
-   (let [prefix* (if (seq prefix) (concat-symbols prefix "-") prefix)]
+   ;; FIXME: inconsistent types of prefix and suffix, one is a symbol the other a string
+   (let [prefix* (if (or (symbol? prefix)
+                         (seq prefix))
+                   (concat-symbols prefix "-")
+                   prefix)]
      (cond
        (symbol? arg)
        `(def ~(concat-symbols prefix* arg suffix) ~arg)
@@ -88,149 +92,179 @@
      (map (partial define-let-bindings prefix suffix) body))))
 
 
+(defn define-in-variadic-forms
+  ([form]
+   (define-in-variadic-forms "" "" "" form))
+
+  ([suffix-for-def suffix-for-let form]
+   (define-in-variadic-forms "" suffix-for-def suffix-for-let form))
+
+  ([prefix suffix-for-def suffix-for-let form]
+   (let [params (first form)
+         prepost-map? (when (map? (second form))
+                        (second form))
+         body (if (nil? prepost-map?)
+                (second form)
+                (last form))]
+
+     (if (some? prepost-map?)
+       `(~params ~@(define-args prefix suffix-for-def params)
+                 ~prepost-map?
+                 ~(define-let-bindings prefix suffix-for-let body))
+       `(~params ~@(define-args prefix suffix-for-def params)
+                 ~(define-let-bindings prefix suffix-for-let body))))))
+
+
 (defmacro defn*
-  ([name params* body]
-   `(defn ~name ~params*
-      ~@(define-args params*)
-      ~(define-let-bindings body)))
-  ([name doc-string? params* body]
-   `(defn ~name ~doc-string? ~params*
-      ~@(define-args params*)
-      ~(define-let-bindings body)))
+  [name & forms]
+  (let [[doc-string? forms] (if (string? (first forms))
+                              [(first forms) (rest forms)]
+                              [nil forms])
+        [attr-map? forms] (if (map? (first forms))
+                            [(first forms) (rest forms)]
+                            [nil forms])
+        [params* forms] (if (vector? (first forms))
+                          [(first forms) (rest forms)]
+                          [nil forms])
+        [prepost-map? forms] (if (and (some? params*)
+                                      (map? (first forms)))
+                               [(first forms) (rest forms)]
+                               [nil forms])
+        [variadic-defs forms] (if (and (nil? params*)
+                                       (list? (first forms)))
+                                [forms nil]
+                                [nil forms])
+        body (if (and (nil? variadic-defs)
+                      (list? (first forms)))
+               (first forms)
+               nil)
+        params-def (when (some? params*)
+                     (define-args params*))
+        body* (when (some? body)
+                (define-let-bindings body))
 
-  ([name doc-string? attr-map? params* body]
-   `(defn ~name ~doc-string? ~attr-map? ~params*
-      ~@(define-args params*)
-      ~(define-let-bindings body)))
+        variadic-defs* (map define-in-variadic-forms variadic-defs)
 
-  ([name doc-string? attr-map? params* prepost-map? body]
-   `(defn ~name ~doc-string? ~attr-map? ~params* ~prepost-map?
-      ~@(define-args params*)
-      ~(define-let-bindings body))))
+        args-to-defn (list doc-string? attr-map? params* prepost-map?)
+        args-to-defn* (remove nil? args-to-defn)]
+
+    (if (some? variadic-defs)
+      `(defn ~name ~@args-to-defn*
+         ~@variadic-defs*)
+
+      `(defn ~name ~@args-to-defn*
+         ~@params-def
+         ~body*))))
+
+
+(defmacro defn**
+  [name & forms]
+  (let [[doc-string? forms] (if (string? (first forms))
+                              [(first forms) (rest forms)]
+                              [nil forms])
+        [attr-map? forms] (if (map? (first forms))
+                            [(first forms) (rest forms)]
+                            [nil forms])
+        [params* forms] (if (vector? (first forms))
+                          [(first forms) (rest forms)]
+                          [nil forms])
+        [prepost-map? forms] (if (and (some? params*)
+                                      (map? (first forms)))
+                               [(first forms) (rest forms)]
+                               [nil forms])
+        [variadic-defs forms] (if (and (nil? params*)
+                                       (list? (first forms)))
+                                [forms nil]
+                                [nil forms])
+        body (if (and (nil? variadic-defs)
+                      (list? (first forms)))
+               (first forms)
+               nil)
+        params-def (when (some? params*)
+                     (define-args "*" params*))
+        body* (when (some? body)
+                (define-let-bindings "-" body))
+
+        variadic-defs* (map #(define-in-variadic-forms "*" "-" %) variadic-defs)
+
+        args-to-defn (list doc-string? attr-map? params* prepost-map?)
+        args-to-defn* (remove nil? args-to-defn)]
+
+    (if (some? variadic-defs)
+      `(defn ~name ~@args-to-defn*
+         ~@variadic-defs*)
+
+      `(defn ~name ~@args-to-defn*
+         ~@params-def
+         ~body*))))
+
+
+(defmacro defn***
+  [name & forms]
+  (let [[doc-string? forms] (if (string? (first forms))
+                              [(first forms) (rest forms)]
+                              [nil forms])
+        [attr-map? forms] (if (map? (first forms))
+                            [(first forms) (rest forms)]
+                            [nil forms])
+        [params* forms] (if (vector? (first forms))
+                          [(first forms) (rest forms)]
+                          [nil forms])
+        [prepost-map? forms] (if (and (some? params*)
+                                      (map? (first forms)))
+                               [(first forms) (rest forms)]
+                               [nil forms])
+        [variadic-defs forms] (if (and (nil? params*)
+                                       (list? (first forms)))
+                                [forms nil]
+                                [nil forms])
+        body (if (and (nil? variadic-defs)
+                      (list? (first forms)))
+               (first forms)
+               nil)
+        params-def (when (some? params*)
+                     (define-args name "*" params*))
+        body* (when (some? body)
+                (define-let-bindings name "-" body))
+
+        variadic-defs* (map #(define-in-variadic-forms name "*" "-" %) variadic-defs)
+
+        args-to-defn (list doc-string? attr-map? params* prepost-map?)
+        args-to-defn* (remove nil? args-to-defn)]
+
+    (if (some? variadic-defs)
+      `(defn ~name ~@args-to-defn*
+         ~@variadic-defs*)
+
+      `(defn ~name ~@args-to-defn*
+         ~@params-def
+         ~body*))))
 
 
 (comment
-  (hey "you")
+  
+  (macroexpand-1 '(defn** hey [x]
+                        (let [x 1]
+                          [x])
+                        (print x)))
+; (clojure.core/defn hey [x] (def x* x) (let [x 1] (def x- x) [x]))
 
-
-  (macroexpand-1 '(defn* hey [x]
-                    (let [a 1 b 2]
-                      (print a)
-                      x)))
+  (macroexpand-1 '(defn*** hey [x]
+                        (let [x 1]
+                          [x])
+                        (print x)))
 ; (clojure.core/defn
 ;  hey
 ;  [x]
-;  (def x x)
-;  (let [a 1 b 2] (def a a) (def b b) (print a) x))
-
-
-;; (clojure.core/defn
-;;  hey
-;;  [x]
-;;  (def x x)
-;;  (let [a 1 b 2] (def a a) (def b b) (print a)))
-
-  (macroexpand-1 '(defn* hey [x y [a1 a2] {idex i :keys [k1 k2] :as m}]
-                    x))
-
-
-;; (clojure.core/defn
-;;  hey
-;;  [x y [a1 a2] {idex i, :keys [k1 k2], :as m}]
-;;  (def x x)
-;;  (def y y)
-;;  (def a1 a1)
-;;  (def a2 a2)
-;;  (def idex idex)
-;;  (def k1 k1)
-;;  (def k2 k2)
-;;  (def m m)
-;;  x)
-
-
-;; (clojure.core/defn
-;;  hey
-;;  [x y [a1 a2] {:keys [k1 k2], :as m}]
-;;  (def x x)
-;;  (def y y)
-;;  ((def a1 a1) (def a2 a2))
-;;  ((def m m) (def k1 k1) (def k2 k2))
-;;  x)
-
-
-  (seq 'a)
-
-  (define-let-bindings '(do  (print d) (if-let [x 1 y 2] y)))
-
-  (define-let-bindings '(let [d 1 e 2] (do  (print d) (let [x 1 y 2] y))))
-
-
-;; (let
-;;  [d 1 e 2]
-;;  (def d d)
-;;  (def e e)
-;;  (do (print d) (let [x 1 y 2] (def x x) (def y y) y)))
-
-
-  (let-form? (if (seq '(let [d 1 e 2]))
-               `(~@(macroexpand '(let [d 1 e 2])))
-               '(let [d 1 e 2])))
-
-
-  (define-let-bindings '(if-let [d 1 e 2] (do  (print d) (let [x 1 y 2] y))))
-; (if-let
-;  ""
-;  (def dclojure.lang.LazySeq@1 d)
-;  (def eclojure.lang.LazySeq@1 e)
-;  ())
-
-  (define-let '(let [d 1 e 2]))
-
-  (arg->def-args 'a)
-
-  (arg->def-args ['a 'b])
-
-  (arg->def-args {:keys ['a 'b] :as 'alphamap})
-
-  a
-
-  (hey "heyllooooooo" "bae")
-
-
-  (let-form? '(let [d 1 e 2])) ; 
-
-  (=  (first '(let* [d 1 e 2])) 'let*)
-
-
-  (defn* hey [x]
-    (print x))
-
-
-  (extract-bindings '(let [a b
-                           c d]))
-
-
-  (insert-into-let '[a 1 b 2])
-  (define-args (extract-bindings '[a 1 b 2]))
-
-
-  (macroexpand-1 '(defn* arg->def-args
-                    [suffix arg]
-                    (cond
-                      (symbol? arg)
-                      `(def ~(concat-symbols arg suffix) ~arg)
-
-                      (vector? arg)
-                      (map (partial arg->def-args suffix) arg)
-
-                      (seq? arg)
-                      (map arg->def-args arg suffix)
-
-                      (map? arg)
-                      (let [keys* (remove keyword? (keys arg))]
-                        (concat (arg->def-args suffix keys*)
-                                (arg->def-args suffix (:keys arg))
-                                (list (arg->def-args suffix (:as arg)))))))) ; (clojure.core/defn arg->def-args [suffix arg] () () ())
-  (arg->def-args "" {'idx 'index :keys ['a 'b]})
-
-  suffix)
+;  (def hey-x* x)
+;  (let [x 1] (def hey-x- x) [x]))
+  
+(define-in-variadic-forms "*" "-"
+  '( [x]
+                        (print x)))
+(macroexpand-1 '(defn hey 
+                  ( [x]
+                        (print x))
+                  ([x y]
+                   (print x y))))
+)
