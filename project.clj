@@ -6,5 +6,5 @@
   :dependencies [[org.clojure/clojure "1.10.3"]
                  ]
   :plugins [[lein-auto "0.1.3"]
-            [lein-cloverage "1.2.2"]]
+            [lein-cloverage "1.0.9"]]
   :repl-options {:init-ns snitch.core})
