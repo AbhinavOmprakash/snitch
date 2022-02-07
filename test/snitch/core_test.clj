@@ -18,6 +18,7 @@
 
 (deftest test-arg->def-args
   (testing "simple symbol"
+  (is (expansion-valid? (arg->def-args 'a) (def a a)))
     (is (expansion-valid? (arg->def-args "" 'a) (def a a)))
     (is (expansion-valid? (arg->def-args "*" 'a) (def a* a)))
     (is (expansion-valid? (arg->def-args  'fname "*" 'a) (def fname-a* a)))
@@ -45,8 +46,10 @@
     (is (expansion-valid? (arg->def-args "" {'idx 'index :keys ['a 'b]})
                           ((def idx idx) (def a a) (def b b))))
     (is (expansion-valid? (arg->def-args "*" {'idx 'index :keys ['a 'b]})
-                          ((def idx* idx) (def a* a) (def b* b))))))
-
+                          ((def idx* idx) (def a* a) (def b* b))))
+    (is (expansion-valid? (arg->def-args {:keys ['ns/foo ]})
+                          ((def foo foo)))
+        "Should be able to def qualified symbols")))
 
 (deftest test-define-args
   (testing "Params list with simple symbols"

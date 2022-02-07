@@ -1,4 +1,16 @@
-(ns snitch.core)
+(ns snitch.core
+  (:require
+    [clojure.string :as s]))
+
+
+(defn ->simple-symbol
+  [sym]
+  (if (simple-symbol? sym) sym
+      (-> sym
+          str
+          (s/split #"/")
+          last
+          symbol)))
 
 
 (defn concat-symbols
@@ -30,25 +42,27 @@
    (let [prefix* (if (or (symbol? prefix)
                          (seq prefix))
                    (concat-symbols prefix "-")
-                   prefix)]
+                   prefix)
+         arg->def-args* (partial arg->def-args prefix* suffix)]
      (cond
        (symbol? arg)
-       `(def ~(concat-symbols prefix* arg suffix) ~arg)
+       `(def ~(concat-symbols prefix* (->simple-symbol arg) suffix)
+          ~(->simple-symbol arg))
 
        (vector? arg)
-       (map (partial arg->def-args prefix* suffix) arg)
+       (map arg->def-args* arg)
 
        (seq? arg)
-       (map (partial arg->def-args prefix* suffix) arg)
+       (map arg->def-args* arg)
 
        (map? arg)
        (let [keys* (remove keyword? (keys arg))
-             map-name (arg->def-args prefix* suffix (:as arg))
+             map-name (arg->def-args* (:as arg))
              map-name* (if (nil? map-name)
                          nil
                          (list map-name))]
-         (concat (arg->def-args prefix* suffix keys*)
-                 (arg->def-args prefix* suffix (:keys arg))
+         (concat (arg->def-args* keys*)
+                 (arg->def-args* (:keys arg))
                  map-name*))))))
 
 
