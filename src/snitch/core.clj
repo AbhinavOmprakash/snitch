@@ -82,7 +82,20 @@
 
 (defn insert-into-let
   ([prefix suffix bindings]
-   `(~bindings ~@(define-args prefix suffix (extract-bindings bindings)))))
+   (let [defined-bindings (->> bindings
+                               extract-bindings
+                               (define-args prefix suffix)
+                               (map (fn [d]
+                                      (list '_ d))))
+         _ (def defined-bindings defined-bindings)
+         bindings* (partition-all 2 bindings)
+         _ (def bindings* bindings*)]
+
+     (->>  defined-bindings
+          (interleave bindings* )
+          (reduce (fn [acc [x1 x2]]
+                    (conj acc x1 x2))
+                  [])))))
 
 
 (defn define-let-bindings
@@ -99,7 +112,7 @@
      (let [[l* bindings & inner-body] body
            suffix* (str suffix (str (first suffix))) ; FIXME: Hacky. since suffix is repeating the same char, we take the first char, since we want the suffix to grow one char at a time, and not double
            inner-body* (define-let-bindings prefix suffix* inner-body)]
-       `(~l* ~@(insert-into-let prefix suffix bindings)
+       `(~l* ~(insert-into-let prefix suffix bindings)
              ~@inner-body*))
 
      :else
