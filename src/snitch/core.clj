@@ -80,22 +80,15 @@
            args)))
 
 
+
 (defn insert-into-let
   ([prefix suffix bindings]
-   (let [defined-bindings (->> bindings
-                               extract-bindings
-                               (define-args prefix suffix)
-                               (map (fn [d]
-                                      (list '_ d))))
-         _ (def defined-bindings defined-bindings)
-         bindings* (partition-all 2 bindings)
-         _ (def bindings* bindings*)]
-
-     (->>  defined-bindings
-          (interleave bindings* )
-          (reduce (fn [acc [x1 x2]]
-                    (conj acc x1 x2))
-                  [])))))
+   (reduce (fn [acc [var* value]]
+             (let [defined-args (define-args prefix suffix [var*])
+                   defined-args* (interleave (repeat '_) defined-args)]
+               (apply conj (conj acc var* value) defined-args* )))
+           []
+           (partition 2 bindings))))
 
 
 (defn define-let-bindings

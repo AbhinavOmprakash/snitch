@@ -191,7 +191,15 @@
                           (do
                             (let [a 1 _ (def fname-a- a)] (print a))
                             (let [b 2 _ (def fname-b- b)] (str b))
-                            (let [c 3 _ (def fname-c- c)] (symbol c)))))))
+                            (let [c 3 _ (def fname-c- c)] (symbol c))))))
+  (testing "let with destructuring"
+    (is (expansion-valid? (define-let-bindings '(let [[a b] [1 2]
+                                                      c 3]))
+                          (let [[a b] [1 2]
+                                _ (def a a)
+                                _ (def b b)
+                                c 3
+                                _ (def c c)])))))
 
 
 #_(deftest test-defn*
