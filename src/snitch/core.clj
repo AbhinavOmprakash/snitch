@@ -154,8 +154,7 @@
                                        (list? (first forms)))
                                 [forms nil]
                                 [nil forms])
-        body (if (and (nil? variadic-defs)
-                      (list? (first forms)))
+        body (if (nil? variadic-defs)
                (first forms)
                nil)
         params-def (when (some? params*)
@@ -174,8 +173,11 @@
 
       `(defn ~name ~@args-to-defn*
          ~@params-def
-         ~body*))))
+         (let [result#
+               ~body*]
+           (def ~(concat-symbols name '>) result#)
 
+           result#)))))
 
 (defmacro defn**
   [name & forms]

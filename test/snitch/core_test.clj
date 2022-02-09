@@ -204,6 +204,12 @@
 
 #_(deftest test-defn*
   (testing "defn* with name, params and body"
+  (is (macro-valid? (defn* hey [x]
+                        x)
+                      (clojure.core/defn hey
+                        [x]
+                        (def x x) 
+                        x)))
     (is (macro-valid? (defn* hey [x]
                         (print x))
                       (clojure.core/defn hey
