@@ -86,7 +86,7 @@
    (reduce (fn [acc [var* value]]
              (let [defined-args (define-args prefix suffix [var*])
                    defined-args* (interleave (repeat '_) defined-args)]
-               (apply conj (conj acc var* value) defined-args* )))
+               (apply conj (conj acc var* value) defined-args*)))
            []
            (partition 2 bindings))))
 
