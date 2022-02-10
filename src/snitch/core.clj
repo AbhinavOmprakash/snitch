@@ -113,13 +113,13 @@
 
 
 (defn define-in-variadic-forms
-  ([form]
-   (define-in-variadic-forms "" "" "" form))
+  ([name form]
+   (define-in-variadic-forms name "" "" "" form))
 
-  ([suffix-for-def suffix-for-let form]
-   (define-in-variadic-forms "" suffix-for-def suffix-for-let form))
+  ([name suffix-for-def suffix-for-let form]
+   (define-in-variadic-forms name "" suffix-for-def suffix-for-let form))
 
-  ([prefix suffix-for-def suffix-for-let form]
+  ([name prefix suffix-for-def suffix-for-let form]
    (let [params (first form)
          prepost-map? (when (map? (second form))
                         (second form))
@@ -130,9 +130,13 @@
      (if (some? prepost-map?)
        `(~params ~@(define-args prefix suffix-for-def params)
                  ~prepost-map?
-                 ~(define-let-bindings prefix suffix-for-let body))
+                 (let [result# ~(define-let-bindings prefix suffix-for-let body)]
+                   (def ~(concat-symbols name '>) result#)
+                 result#))
        `(~params ~@(define-args prefix suffix-for-def params)
-                 ~(define-let-bindings prefix suffix-for-let body))))))
+                 (let [result# ~(define-let-bindings prefix suffix-for-let body)]
+                   (def ~(concat-symbols name '>) result#)
+                 result#))))))
 
 
 (defmacro defn*
@@ -165,7 +169,7 @@
         body* (when (some? body)
                 (define-let-bindings body))
 
-        variadic-defs* (map define-in-variadic-forms variadic-defs)
+        variadic-defs* (map #(define-in-variadic-forms name %) variadic-defs)
 
         args-to-defn (list doc-string? attr-map? params* prepost-map?)
         args-to-defn* (remove nil? args-to-defn)]
@@ -214,7 +218,7 @@
         body* (when (some? body)
                 (define-let-bindings "-" body))
 
-        variadic-defs* (map #(define-in-variadic-forms "*" "-" %) variadic-defs)
+        variadic-defs* (map #(define-in-variadic-forms name "*" "-" %) variadic-defs)
 
         args-to-defn (list doc-string? attr-map? params* prepost-map?)
         args-to-defn* (remove nil? args-to-defn)]
@@ -259,7 +263,7 @@
         body* (when (some? body)
                 (define-let-bindings name "-" body))
 
-        variadic-defs* (map #(define-in-variadic-forms name "*" "-" %) variadic-defs)
+        variadic-defs* (map #(define-in-variadic-forms name name "*" "-" %) variadic-defs)
 
         args-to-defn (list doc-string? attr-map? params* prepost-map?)
         args-to-defn* (remove nil? args-to-defn)]
