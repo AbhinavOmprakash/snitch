@@ -147,7 +147,10 @@
                           [(first forms) (rest forms)]
                           [nil forms])
         [prepost-map? forms] (if (and (some? params*)
-                                      (map? (first forms)))
+                                      (map? (first forms))
+                                      (or
+                                        (vector? (:pre (first forms)))
+                                        (vector? (:post (first forms)))))
                                [(first forms) (rest forms)]
                                [nil forms])
         [variadic-defs forms] (if (and (nil? params*)
@@ -179,6 +182,7 @@
 
            result#)))))
 
+
 (defmacro defn**
   [name & forms]
   (let [[doc-string? forms] (if (string? (first forms))
@@ -191,7 +195,10 @@
                           [(first forms) (rest forms)]
                           [nil forms])
         [prepost-map? forms] (if (and (some? params*)
-                                      (map? (first forms)))
+                                      (map? (first forms))
+                                      (or
+                                        (vector? (:pre (first forms)))
+                                        (vector? (:post (first forms)))))
                                [(first forms) (rest forms)]
                                [nil forms])
         [variadic-defs forms] (if (and (nil? params*)
@@ -233,7 +240,10 @@
                           [(first forms) (rest forms)]
                           [nil forms])
         [prepost-map? forms] (if (and (some? params*)
-                                      (map? (first forms)))
+                                      (map? (first forms))
+                                      (or
+                                        (vector? (:pre (first forms)))
+                                        (vector? (:post (first forms)))))
                                [(first forms) (rest forms)]
                                [nil forms])
         [variadic-defs forms] (if (and (nil? params*)
