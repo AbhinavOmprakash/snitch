@@ -34,57 +34,43 @@
 
 
 (defn arg->def-args
-  ([arg] (arg->def-args "" "" arg))
-  ([suffix arg]
-   (arg->def-args "" suffix arg))
-  ([prefix suffix arg]
-   ;; FIXME: inconsistent types of prefix and suffix, one is a symbol the other a string
-   (let [prefix* (if (or (symbol? prefix)
-                         (seq prefix))
-                   (concat-symbols prefix "-")
-                   prefix)
-         arg->def-args* (partial arg->def-args prefix* suffix)]
-     (cond
+  ([arg]
+   (cond
        (symbol? arg)
-       `(def ~(concat-symbols prefix* (->simple-symbol arg) suffix)
+       `(def ~(concat-symbols (->simple-symbol arg))
           ~(->simple-symbol arg))
 
        (vector? arg)
-       (map arg->def-args* arg)
+       (map arg->def-args arg)
 
        (seq? arg)
-       (map arg->def-args* arg)
+       (map arg->def-args arg)
 
        (map? arg)
        (let [keys* (remove keyword? (keys arg))
-             map-name (arg->def-args* (:as arg))
+             map-name (arg->def-args (:as arg))
              map-name* (if (nil? map-name)
                          nil
                          (list map-name))]
-         (concat (arg->def-args* keys*)
-                 (arg->def-args* (:keys arg))
-                 map-name*))))))
+         (concat (arg->def-args keys*)
+                 (arg->def-args (:keys arg))
+                 map-name*)))))
 
 
 (defn define-args
   ([args]
-   (define-args "" "" args))
-  ([suffix args]
-   (define-args "" suffix args))
-  ([prefix suffix args]
    (reduce (fn [body arg]
              (if (symbol? arg)
-               (concat body (list (arg->def-args prefix suffix arg)))
-               (concat body (arg->def-args prefix suffix arg))))
+               (concat body (list (arg->def-args arg)))
+               (concat body (arg->def-args arg))))
            ()
            args)))
 
 
-
 (defn insert-into-let
-  ([prefix suffix bindings]
+  ([bindings]
    (reduce (fn [acc [var* value]]
-             (let [defined-args (define-args prefix suffix [var*])
+             (let [defined-args (define-args [var*])
                    defined-args* (interleave (repeat '_) defined-args)]
                (apply conj (conj acc var* value) defined-args*)))
            []
@@ -93,33 +79,22 @@
 
 (defn define-let-bindings
   ([body]
-   (define-let-bindings "" "" body))
-  ([suffix body]
-   (define-let-bindings "" suffix body))
-  ([prefix suffix body]
    (cond
      ((complement list?) body)
      body
 
      (let-form? body)
      (let [[l* bindings & inner-body] body
-           suffix* (str suffix (str (first suffix))) ; FIXME: Hacky. since suffix is repeating the same char, we take the first char, since we want the suffix to grow one char at a time, and not double
-           inner-body* (define-let-bindings prefix suffix* inner-body)]
-       `(~l* ~(insert-into-let prefix suffix bindings)
+           inner-body* (define-let-bindings inner-body)]
+       `(~l* ~(insert-into-let bindings)
              ~@inner-body*))
 
      :else
-     (map (partial define-let-bindings prefix suffix) body))))
+     (map (partial define-let-bindings) body))))
 
 
 (defn define-in-variadic-forms
   ([name form]
-   (define-in-variadic-forms name "" "" "" form))
-
-  ([name suffix-for-def suffix-for-let form]
-   (define-in-variadic-forms name "" suffix-for-def suffix-for-let form))
-
-  ([name prefix suffix-for-def suffix-for-let form]
    (let [params (first form)
          prepost-map? (when (map? (second form))
                         (second form))
@@ -128,15 +103,15 @@
                 (last form))]
 
      (if (some? prepost-map?)
-       `(~params ~@(define-args prefix suffix-for-def params)
+       `(~params ~@(define-args params)
                  ~prepost-map?
-                 (let [result# ~(define-let-bindings prefix suffix-for-let body)]
+                 (let [result# ~(define-let-bindings body)]
                    (def ~(concat-symbols name '>) result#)
-                 result#))
-       `(~params ~@(define-args prefix suffix-for-def params)
-                 (let [result# ~(define-let-bindings prefix suffix-for-let body)]
+                   result#))
+       `(~params ~@(define-args params)
+                 (let [result# ~(define-let-bindings body)]
                    (def ~(concat-symbols name '>) result#)
-                 result#))))))
+                   result#))))))
 
 
 (defmacro defn*
@@ -185,4 +160,5 @@
            (def ~(concat-symbols name '>) result#)
 
            result#)))))
+
 
