@@ -162,7 +162,7 @@
                                 [forms nil]
                                 [nil forms])
         body (if (nil? variadic-defs)
-               (first forms)
+               forms
                nil)
         params-def (when (some? params*)
                      (define-args params*))
@@ -181,7 +181,7 @@
       `(defn ~name ~@args-to-defn*
          ~@params-def
          (let [result#
-               ~body*]
+               (do ~@body*)]
            (def ~(concat-symbols name '>) result#)
 
            result#)))))
