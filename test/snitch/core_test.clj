@@ -204,11 +204,11 @@
 
 #_(deftest test-defn*
   (testing "defn* with name, params and body"
-  (is (macro-valid? (defn* hey [x]
+    (is (macro-valid? (defn* hey [x]
                         x)
                       (clojure.core/defn hey
                         [x]
-                        (def x x) 
+                        (def x x)
                         x)))
     (is (macro-valid? (defn* hey [x]
                         (print x))
@@ -281,54 +281,35 @@
                         [x]
                         {:pre [], :post []}
                         (def x x)
-                        (let [y 2] (def y y) (print x)))))))
-
-
-#_(deftest test-defn**
-  (testing "defn** with name, params and body"
-    (is (macro-valid? (defn** hey [x]
-                        (print x))
-                      (clojure.core/defn hey
+                        (let [y 2] (def y y) (print x))))))
+  (testing "defn* works when function returns a map, and does not mistake it for a pre post map"
+    (is (macro-valid? (defn* hey
+                        "prints x"
                         [x]
-                        (def x* x) (print x))))
-    (is (macro-valid? (defn** hey [x]
-                        (let [y 2]
-                          (print x)))
+                        {:val x})
                       (clojure.core/defn hey
+                        "prints x"
                         [x]
-                        (def x* x)
-                        (let [y 2]
-                          (def y- y)
-                          (print x))))))
-
-  (testing "defn** with variadic args"
-    (is (macro-valid? (defn** hey
-                        ([a] a)
-                        ([a b] [a b]))
-                      (clojure.core/defn hey
-                        ([a] (def a* a) a)
-                        ([a b] (def a* a) (def b* b) [a b]))))))
-
-
-(deftest test-defn***
-  (testing "defn*** with name, params and body"
-    (is (macro-valid? (defn*** hey [x]
-                        (print x))
-                      (clojure.core/defn hey
+                        (def x x)
+                        (clojure.core/let
+                          [result__12833__auto__ {:val x}]
+                          (def hey> result__12833__auto__) ; test will fail because of autogensym
+                          result__12833__auto__))))
+    (is (macro-valid? (defn* hey
+                        "prints x"
                         [x]
-                        (def hey-x* x) (print x))))
-    (is (macro-valid? (defn*** hey [x]
-                        (let [y 2]
-                          (print x)))
+                        {:pre []}
+                        {:val x})
                       (clojure.core/defn hey
+                        "prints x"
                         [x]
-                        (def hey-x* x)
-                        (let [y 2 _ (def hey-y- y)] (print x))))))
+                        {:pre []}
+                        (def x x)
+                        (clojure.core/let
+                          [result__12833__auto__ {:val x}]
+                          (def hey> result__12833__auto__) ; test will fail because of autogensym
+                          result__12833__auto__))))))
 
-  (testing "defn*** with variadic args"
-    (is (macro-valid? (defn*** hey
-                        ([a] a)
-                        ([a b] [a b]))
-                      (clojure.core/defn hey
-                        ([a] (def hey-a* a) a)
-                        ([a b] (def hey-a* a) (def hey-b* b) [a b]))))))
+
+
+
