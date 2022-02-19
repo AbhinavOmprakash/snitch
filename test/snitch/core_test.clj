@@ -123,7 +123,7 @@
                                 _ (def c c)])))))
 
 
-(deftest test-defn*
+#_(deftest test-defn*
   (testing "defn* with name, params and body"
     (is (macro-valid? (defn* hey [x]
                         x)
