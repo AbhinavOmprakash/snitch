@@ -26,13 +26,6 @@
             ['let 'if-let 'when-let]))))
 
 
-(defn extract-bindings
-  [bindings]
-  (keep-indexed (fn [i el]
-                  (when (even? i) el))
-                bindings))
-
-
 (defn arg->def-args
   ([arg]
    (cond
