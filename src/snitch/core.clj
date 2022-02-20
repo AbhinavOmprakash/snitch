@@ -155,3 +155,10 @@
            result#)))))
 
 
+(defmacro defmethod*
+  [name dispatch-value forms]
+  `(defmethod ~name ~dispatch-value 
+     ~(define-in-variadic-forms name forms)))
+
+
+
