@@ -23,7 +23,7 @@
   (boolean
     (when (list? form)
       (some #{(first form)}
-            ['let 'if-let 'when-let]))))
+            ['let 'if-let 'when-let 'fn]))))
 
 
 (defn arg->def-args
@@ -70,7 +70,7 @@
            (partition 2 bindings))))
 
 
-(declare define-in-binding-forms)
+(declare define-in-binding-forms define-in-variadic-forms )
 
 
 (defmulti define-binding-form (fn [body]
@@ -97,6 +97,11 @@
          ~@(define-in-binding-forms inner-body))))
 
 
+(defmethod define-binding-form 'fn
+  ([body]
+   `(fn ~@(define-in-variadic-forms 'fn* (rest body)))))
+
+
 (defn define-in-binding-forms
   ([body]
    (cond
@@ -108,6 +113,8 @@
 
      :else
      (map (partial define-in-binding-forms) body))))
+
+
 
 
 (defn define-in-variadic-forms
