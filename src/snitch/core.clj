@@ -18,7 +18,7 @@
   (symbol (apply str symbols)))
 
 
-(defn let-form?
+(defn binding-form?
   [form]
   (boolean
     (when (list? form)
@@ -29,25 +29,25 @@
 (defn arg->def-args
   ([arg]
    (cond
-       (symbol? arg)
-       `(def ~(concat-symbols (->simple-symbol arg))
-          ~(->simple-symbol arg))
+     (symbol? arg)
+     `(def ~(concat-symbols (->simple-symbol arg))
+        ~(->simple-symbol arg))
 
-       (vector? arg)
-       (map arg->def-args arg)
+     (vector? arg)
+     (map arg->def-args arg)
 
-       (seq? arg)
-       (map arg->def-args arg)
+     (seq? arg)
+     (map arg->def-args arg)
 
-       (map? arg)
-       (let [keys* (remove keyword? (keys arg))
-             map-name (arg->def-args (:as arg))
-             map-name* (if (nil? map-name)
-                         nil
-                         (list map-name))]
-         (concat (arg->def-args keys*)
-                 (arg->def-args (:keys arg))
-                 map-name*)))))
+     (map? arg)
+     (let [keys* (remove keyword? (keys arg))
+           map-name (arg->def-args (:as arg))
+           map-name* (if (nil? map-name)
+                       nil
+                       (list map-name))]
+       (concat (arg->def-args keys*)
+               (arg->def-args (:keys arg))
+               map-name*)))))
 
 
 (defn define-args
@@ -70,20 +70,44 @@
            (partition 2 bindings))))
 
 
-(defn define-let-bindings
+(declare define-in-binding-forms)
+
+
+(defmulti define-binding-form (fn [body]
+                                (first body)))
+
+
+(defmethod define-binding-form 'let
+  ([[l* bindings & inner-body]]
+   `(~l* ~(insert-into-let bindings)
+         ~@(define-in-binding-forms inner-body))))
+
+
+(defmethod define-binding-form 'if-let
+  ([[l* bindings & inner-body]]
+   `(~l* ~bindings
+         (def ~(first bindings) ~(first bindings))
+         ~@(define-in-binding-forms inner-body))))
+
+
+(defmethod define-binding-form 'when-let
+  ([[l* bindings & inner-body]]
+   `(~l* ~bindings
+         (def ~(first bindings) ~(first bindings))
+         ~@(define-in-binding-forms inner-body))))
+
+
+(defn define-in-binding-forms
   ([body]
    (cond
      ((complement list?) body)
      body
 
-     (let-form? body)
-     (let [[l* bindings & inner-body] body
-           inner-body* (define-let-bindings inner-body)]
-       `(~l* ~(insert-into-let bindings)
-             ~@inner-body*))
+     (binding-form? body)
+     (define-binding-form body)
 
      :else
-     (map (partial define-let-bindings) body))))
+     (map (partial define-in-binding-forms) body))))
 
 
 (defn define-in-variadic-forms
@@ -98,11 +122,11 @@
      (if (some? prepost-map?)
        `(~params ~@(define-args params)
                  ~prepost-map?
-                 (let [result# ~(define-let-bindings body)]
+                 (let [result# ~(define-in-binding-forms body)]
                    (def ~(concat-symbols name '>) result#)
                    result#))
        `(~params ~@(define-args params)
-                 (let [result# ~(define-let-bindings body)]
+                 (let [result# ~(define-in-binding-forms body)]
                    (def ~(concat-symbols name '>) result#)
                    result#))))))
 
@@ -135,7 +159,7 @@
         params-def (when (some? params*)
                      (define-args params*))
         body* (when (some? body)
-                (define-let-bindings body))
+                (define-in-binding-forms body))
 
         variadic-defs* (map #(define-in-variadic-forms name %) variadic-defs)
 
@@ -157,8 +181,6 @@
 
 (defmacro defmethod*
   [name dispatch-value forms]
-  `(defmethod ~name ~dispatch-value 
+  `(defmethod ~name ~dispatch-value
      ~(define-in-variadic-forms name forms)))
-
-
 
