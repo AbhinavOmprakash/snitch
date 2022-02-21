@@ -8,9 +8,49 @@ but it's pretty close and will be useful in 90% (or some other made up number cl
 
 ## Usage
 There are two macros `defn*` and `defmethod*`.
+They are drop-in replacements for `defn` and `defmethod`.
 
-## Why?
-I couldn't figure out how to get the debugger to work.
-## Usage
+`defn*` and `defmethod*` creates inline defs of the parameters passed to the functions,
+and also inside the let bindings of the functions.
+This makes it very "ergonomic" for repl-driven development.
 
-FIXME
+```clj
+(require '[snitch.core :refer [defn*]])
+
+
+(defn* foo [a b]
+  (+ a b)
+  nil)
+
+;;  calling foo with random integers
+(foo (rand-int 100) (rand-int 100)) ; nil
+
+
+;; we can evaluate the value of a and b
+a ; 15
+
+b ; 85
+
+
+;; optionally we can get the return value of foo like so
+
+foo> ; nil
+
+
+;; If you want to see the macroexpansion
+
+
+(macroexpand-1  '(defn* foo [a b]
+  (+ a b)
+  nil))
+
+; (clojure.core/defn
+;  foo
+;  [a b]
+;  (def a a)
+;  (def b b)
+;  (clojure.core/let
+;   [result__12589__auto__ (do (+ a b) nil)]
+;   (def foo> result__12589__auto__)
+;   result__12589__auto__))
+```
