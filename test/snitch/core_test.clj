@@ -1,7 +1,7 @@
 (ns snitch.core-test
   (:require
     [clojure.test :refer :all]
-    [snitch.core :refer [concat-symbols arg->def-args define-args define-let-bindings defn*]]
+    [snitch.core :refer [concat-symbols arg->def-args define-args defn* define-let-bindings]]
     [snitch.test-utils]))
 
 
@@ -123,25 +123,36 @@
                                 _ (def c c)])))))
 
 
-#_(deftest test-defn*
+(deftest test-defn*
   (testing "defn* with name, params and body"
     (is (macro-valid? (defn* hey [x]
                         x)
                       (clojure.core/defn hey
                         [x]
                         (def x x)
-                        x)))
+                        (clojure.core/let
+                          [result__182__auto__ (do x)]
+                          (def hey> result__182__auto__)
+                          result__182__auto__))))
     (is (macro-valid? (defn* hey [x]
                         (print x))
                       (clojure.core/defn hey
                         [x]
-                        (def x x) (print x))))
+                        (def x x)
+                        (clojure.core/let
+                          [result__182__auto__ (do (print x))]
+                          (def hey> result__182__auto__)
+                          result__182__auto__))))
     (is (macro-valid? (defn* hey [x]
                         (let [y 2]
                           (print x)))
                       (clojure.core/defn hey
                         [x]
-                        (def x x) (let [y 2 _ (def y y)] (print x))))))
+                        (def x x)
+                        (clojure.core/let
+                          [result__182__auto__ (do (let [y 2 _ (def y y)] (print x)))]
+                          (def hey> result__182__auto__)
+                          result__182__auto__)))))
   (testing "defn* with variadic args"
     (is (macro-valid? (defn* hey
                         ([a] a)
@@ -149,31 +160,53 @@
                       (clojure.core/defn hey
                         ([a]
                          (def a a)
-                         a)
+                         (clojure.core/let
+                           [result__179__auto__ a]
+                           (def hey> result__179__auto__)
+                           result__179__auto__))
                         ([a b]
                          (def a a)
                          (def b b)
-                         [a b])))))
+                         (clojure.core/let
+                           [result__179__auto__ [a b]]
+                           (def hey> result__179__auto__)
+                           result__179__auto__))))))
   (testing "defn* with docstrings"
     (is (macro-valid? (defn* hey
                         "prints x"
                         [x]
                         (let [y 2]
                           (print x)))
+
                       (clojure.core/defn hey
                         "prints x"
                         [x]
                         (def x x)
-                        (let [y 2 _ (def y y)] (print x)))))
+                        (clojure.core/let
+                          [result__182__auto__ (do (let [y 2 _ (def y y)] (print x)))]
+                          (def hey> result__182__auto__)
+                          result__182__auto__))))
     (is (macro-valid? (defn* hey
                         "prints x"
                         ([x]
                          x)
                         ([x y] [x y]))
+
                       (clojure.core/defn hey
                         "prints x"
-                        ([x] (def x x) x)
-                        ([x y] (def x x) (def y y) [x y])))))
+                        ([x]
+                         (def x x)
+                         (clojure.core/let
+                           [result__179__auto__ x]
+                           (def hey> result__179__auto__)
+                           result__179__auto__))
+                        ([x y]
+                         (def x x)
+                         (def y y)
+                         (clojure.core/let
+                           [result__179__auto__ [x y]]
+                           (def hey> result__179__auto__)
+                           result__179__auto__))))))
 
   (testing "defn* with docstrings, attr-maps, and prepost-maps."
     (is (macro-valid? (defn* hey
@@ -182,12 +215,16 @@
                         [x]
                         (let [y 2]
                           (print x)))
+
                       (clojure.core/defn hey
                         "prints x"
                         {:added 1.0}
                         [x]
                         (def x x)
-                        (let [y 2 _ (def y y)] (print x)))))
+                        (clojure.core/let
+                          [result__182__auto__ (do (let [y 2 _ (def y y)] (print x)))]
+                          (def hey> result__182__auto__)
+                          result__182__auto__))))
     (is (macro-valid? (defn* hey
                         "prints x"
                         {:added 1.0}
@@ -202,7 +239,10 @@
                         [x]
                         {:pre [], :post []}
                         (def x x)
-                        (let [y 2] (def y y) (print x))))))
+                        (clojure.core/let
+                          [result__182__auto__ (do (let [y 2 _ (def y y)] (print x)))]
+                          (def hey> result__182__auto__)
+                          result__182__auto__)))))
   (testing "defn* works when function returns a map, and does not mistake it for a pre post map"
     (is (macro-valid? (defn* hey
                         "prints x"
@@ -213,9 +253,9 @@
                         [x]
                         (def x x)
                         (clojure.core/let
-                          [result__12833__auto__ {:val x}]
-                          (def hey> result__12833__auto__) ; test will fail because of autogensym
-                          result__12833__auto__))))
+                          [result__182__auto__ (do {:val x})]
+                          (def hey> result__182__auto__)
+                          result__182__auto__))))
     (is (macro-valid? (defn* hey
                         "prints x"
                         [x]
@@ -227,6 +267,6 @@
                         {:pre []}
                         (def x x)
                         (clojure.core/let
-                          [result__12833__auto__ {:val x}]
-                          (def hey> result__12833__auto__) ; test will fail because of autogensym
-                          result__12833__auto__))))))
+                          [result__182__auto__ (do {:val x})]
+                          (def hey> result__182__auto__)
+                          result__182__auto__))))))
