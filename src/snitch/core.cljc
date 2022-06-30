@@ -18,7 +18,7 @@
   (symbol (apply str symbols)))
 
 
-(defn let-form?
+(defn binding-form?
   [form]
   (boolean
     (when (list? form)
@@ -83,14 +83,14 @@
      ((complement list?) body)
      body
 
-     (let-form? body)
+     (binding-form? body)
      (let [[l* bindings & inner-body] body
            inner-body* (define-let-bindings inner-body)]
        `(~l* ~(insert-into-let bindings)
              ~@inner-body*))
 
      :else
-     (map (partial define-let-bindings) body))))
+     (map define-let-bindings body))))
 
 
 (defn define-in-variadic-forms
@@ -162,3 +162,7 @@
            result#)))))
 
 
+(defmacro defmethod*
+  [name dispatch-value forms]
+  `(defmethod ~name ~dispatch-value
+     ~(define-in-variadic-forms name forms)))
