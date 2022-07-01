@@ -5,7 +5,8 @@
             :url "https://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.10.3"]]
   :plugins [[lein-auto "0.1.3"]
-            [lein-cloverage "1.0.9"]]
+            [lein-cloverage "1.0.9"]
+            [lein-eftest "0.5.9"]]
   :repl-options {:init-ns snitch.core}
   :repositories [["releases" {:url "https://repo.clojars.org"
                               :sign-releases false}]])
