@@ -7,22 +7,6 @@
     [snitch.test-utils]))
 
 
-(defn ^:private unmap-vars-for-fn!
-  "Will unmap vars that have been globally defined by defn*.
-  This only works with the test functions, because the test functions
-  follow the convention of fn-name-arg-name.
-  for e.g
-  (defn* bar [bar-arg1]
-    (let [bar-arg2 2]
-      [bar-arg1 bar-arg2]))
-  
-  `fn-name` is a symbol."
-  [fn-name]
-  (doseq [var* (filter #(s/starts-with? (str %) (str fn-name))
-                       (keys (ns-publics 'snitch.core-test)))]
-    (ns-unmap 'snitch.core-test var*)))
-
-
 (deftest test-concat-symbols
   (testing "concat a symbol and a symbol"
     (is (= (concat-symbols 'a 'b) 'ab)))
@@ -119,8 +103,7 @@
 
 (deftest test-behaviour-of-defn*
   (testing "Destructuring in parameters"
-    (let [_ (unmap-vars-for-fn! 'foo1)
-          _ (defn* foo1 [{:keys [a/foo1-b1 foo1-c2]
+    (let [_ (defn* foo1 [{:keys [a/foo1-b1 foo1-c2]
                           foo1-dee3 :d
                           :as foo1-m4}
                          [foo1-x5 [foo1-y6 [foo1-z7]]]]
@@ -147,8 +130,7 @@
       (is (= expected-output foo1<))))
 
   (testing "destructuring in let body"
-    (let [_ (unmap-vars-for-fn! 'foo2)
-          _ (defn* foo2 [foo2-p1]
+    (let [_ (defn* foo2 [foo2-p1]
               (let  [{:keys [a/foo2-b1 foo2-c2]
                       foo2-dee3 :d
                       :as foo2-m4}
@@ -182,8 +164,7 @@
 
   (testing "defn* stores history of the values. 
            Calling var> returns the last 3 values."
-    (let [_ (unmap-vars-for-fn! 'foo3)
-          _ (defn* foo3 [foo3-p]
+    (let [_ (defn* foo3 [foo3-p]
               (let [foo3-a (inc foo3-p)]
                 #{foo3-p foo3-a}))
           _ (foo3 1)
@@ -200,8 +181,7 @@
 
   (testing "defn* stores history of the values. 
            Calling var>> with a number returns the last n values."
-    (let [_ (unmap-vars-for-fn! 'foo4)
-          _ (defn* foo4 [foo4-p]
+    (let [_ (defn* foo4 [foo4-p]
               foo4-p)
           _ (foo4 1)
           _ (foo4 2)
@@ -219,8 +199,7 @@
              (take 0 all-foo4-p-values)))))
 
   (testing "calling fn-name! resets the atom"
-    (let [_ (unmap-vars-for-fn! 'foo5)
-          _ (defn* foo5 [foo5-p]
+    (let [_ (defn* foo5 [foo5-p]
               foo5-p)
           _ (foo5 1)
           _ (foo5 2)
@@ -236,21 +215,10 @@
       (is (= atom-value-after-reset
              {})))))
 
-(macroexpand-1 '(defn* foo5 [foo5-p]
-    foo5-p) )
-
-(defn* f [fp]
-    fp)
-(f 2)
-
-( unmap-vars-for-fn! 'f)
 
 ;; FIXME: rename vars to follow convention.
 (deftest test-behaviour-of-defmethod*
-  (let [_  (map #(ns-unmap 'snitch.core-test
-                           %)
-                ['a11  'd11 'b11 'c11])
-        _ (defmulti foomethod (fn
+  (let [_ (defmulti foomethod (fn
                                 ([a11 _] a11)
                                 ([a11 _ _] a11)))
         - (defmethod* foomethod "a"
@@ -264,22 +232,19 @@
 
 
 (deftest test-*let
-  (let [_ (map #(ns-unmap 'snitch.core-test
-                          %)
-               ['a 'b 'c])
-        _ (*let [a 1
+  (let [_ (*let [a 1
                  [b c] [2 3]]
                 [a b c])]
-    (is (= a 1))
-    (is (= b 2))
-    (is (= c 3))))
+    (is (= 1 a))
+    (is (= 2 b))
+    (is (= 3 c))))
 
 
 ;; TODO: add more comprehensive tests
 (deftest test-*fn
-  (let [_ (map #(ns-unmap 'snitch.core-test
-                          %)
-               ['a 'b 'c])
+  (let [_ (mapv #(ns-unmap 'snitch.core-test
+                           %)
+                ['a 'b 'c])
         _ ((*fn [a b]
                 [a b])
            1 2)]
@@ -288,5 +253,21 @@
 
 
 (comment 
+
+(defn ^:private unmap-vars-for-fn!
+  "Will unmap vars that have been globally defined by defn*.
+  This only works with the test functions, because the test functions
+  follow the convention of fn-name-arg-name.
+  for e.g
+  (defn* bar [bar-arg1]
+    (let [bar-arg2 2]
+      [bar-arg1 bar-arg2]))
+  
+  `fn-name` is a symbol."
+  [fn-name]
+  (mapv (partial ns-unmap 'snitch.core-test)
+        (filterv #(s/starts-with? (str %) (str fn-name))
+                 (keys (ns-publics 'snitch.core-test)))))
+
 (filter #(clojure.string/starts-with? (str %) "foo3") (keys (ns-publics 'snitch.core-test)) )
   (map #(ns-unmap 'snitch.core-test %) (keys (ns-publics 'snitch.core-test)) ))
