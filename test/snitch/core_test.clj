@@ -162,58 +162,59 @@
       (is (= expected-p foo2-p1))
       (is (= expected-output foo2<))))
 ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
-  #_(testing "defn* stores history of the values. 
-           Calling var> returns the last 3 values."
-    (let [_ (defn* foo3 [foo3-p]
-              (let [foo3-a (inc foo3-p)]
-                #{foo3-p foo3-a}))
-          _ (foo3 1)
-          _ (foo3 2)
-          _ (foo3 3)
-          expected-foo3-p> '(3 2 1)
-          expected-foo3-a> '(4 3 2)
-          expected-foo3> {'foo3-p expected-foo3-p>
-                          'foo3-a  expected-foo3-a>}]
+  ; (testing "defn* stores history of the values. 
+  ;          Calling var> returns the last 3 values."
+  ;   (let [_ (defn* foo3 [foo3-p]
+  ;             (let [foo3-a (inc foo3-p)]
+  ;               #{foo3-p foo3-a}))
+  ;         _ (foo3 1)
+  ;         _ (foo3 2)
+  ;         _ (foo3 3)
+  ;         expected-foo3-p> '(3 2 1)
+  ;         expected-foo3-a> '(4 3 2)
+  ;         expected-foo3> {'foo3-p expected-foo3-p>
+  ;                         'foo3-a  expected-foo3-a>}]
 
-      (is (= expected-foo3-p> foo3-p>))
-      (is (= expected-foo3-a> foo3-a>))
-      (is (= expected-foo3> foo3>))))
+  ;     (is (= expected-foo3-p> foo3-p>))
+  ;     (is (= expected-foo3-a> foo3-a>))
+  ;     (is (= expected-foo3> foo3>))))
 ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
-  #_(testing "defn* stores history of the values. 
-           Calling var>> with a number returns the last n values."
-    (let [_ (defn* foo4 [foo4-p]
-              foo4-p)
-          _ (foo4 1)
-          _ (foo4 2)
-          _ (foo4 3)
-          _ (foo4 4)
-          _ (foo4 5)
-          _ (foo4 6)
-          ;; history is stored from most recent to least recent.
-          all-foo4-p-values '(6 5 4 3 2 1)]
-      (is (= (foo4-p>> 4)
-             (take 4 all-foo4-p-values)))
-      (is (= (foo4-p>> 5)
-             (take 5 all-foo4-p-values)))
-      (is (= (foo4-p>> 0)
-             (take 0 all-foo4-p-values)))))
+  ; (testing "defn* stores history of the values. 
+  ;          Calling var>> with a number returns the last n values."
+  ;   (let [_ (defn* foo4 [foo4-p]
+  ;             foo4-p)
+  ;         _ (foo4 1)
+  ;         _ (foo4 2)
+  ;         _ (foo4 3)
+  ;         _ (foo4 4)
+  ;         _ (foo4 5)
+  ;         _ (foo4 6)
+  ;         ;; history is stored from most recent to least recent.
+  ;         all-foo4-p-values '(6 5 4 3 2 1)]
+  ;     (is (= (foo4-p>> 4)
+  ;            (take 4 all-foo4-p-values)))
+  ;     (is (= (foo4-p>> 5)
+  ;            (take 5 all-foo4-p-values)))
+  ;     (is (= (foo4-p>> 0)
+  ;            (take 0 all-foo4-p-values)))))
 ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
-  #_(testing "calling fn-name! resets the atom"
-    (let [_ (defn* foo5 [foo5-p]
-              foo5-p)
-          _ (foo5 1)
-          _ (foo5 2)
-          _ (foo5 3)
-          _ (foo5 4)
-          _ (foo5 5)
-          _ (foo5 6)
-          atom-value-before-reset @foo5_
-          _ (foo5!) ; calling fn-name! to reset the atom
-          atom-value-after-reset  @foo5_]
+    ;(testing "calling fn-name! resets the atom"
+    ; (let [_ (defn* foo5 [foo5-p]
+    ;           foo5-p)
+    ;       _ (foo5 1)
+    ;       _ (foo5 2)
+    ;       _ (foo5 3)
+    ;       _ (foo5 4)
+    ;       _ (foo5 5)
+    ;       _ (foo5 6)
+    ;       atom-value-before-reset @foo5_
+    ;       _ (foo5!) ; calling fn-name! to reset the atom
+    ;       atom-value-after-reset  @foo5_]
 
-      (is (false? (empty? atom-value-before-reset)))
-      (is (= atom-value-after-reset
-             {})))))
+    ;   (is (false? (empty? atom-value-before-reset)))
+    ;   (is (= atom-value-after-reset
+    ;          {}))))
+)
 
 
 ;; FIXME: rename vars to follow convention.
@@ -253,6 +254,9 @@
 
 
 (comment 
+  (macroexpand-1 '(defn* foo [{:keys [a]}]
+      a) )
+  (foo 1)
 
 (defn ^:private unmap-vars-for-fn!
   "Will unmap vars that have been globally defined by defn*.
@@ -271,3 +275,4 @@
 
 (filter #(clojure.string/starts-with? (str %) "foo3") (keys (ns-publics 'snitch.core-test)) )
   (map #(ns-unmap 'snitch.core-test %) (keys (ns-publics 'snitch.core-test)) ))
+
