@@ -16,7 +16,7 @@ jobs:
     - name: Install dependencies
       run: lein deps
     - name: Run tests
-      run: lein eftest
+      run: lein test
 #     - name: coverage
 #       run: lein cloverage --codecov
 #     - name: Upload coverage to Codecov
