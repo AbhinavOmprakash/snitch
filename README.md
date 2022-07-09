@@ -53,3 +53,11 @@ foo<
     result__12589__auto__))
 ```
 
+I'd recommend adding snitch to your `~/.lein/profiles.clj`.
+An example file would be
+```clojure
+; profiles.clj
+{:user {:dependencies [[org.clojars.abhinav/snitch "0.0.8"]]}}
+
+{:dev {:dependencies [[org.clojars.abhinav/snitch "0.0.8"]]}}
+```
