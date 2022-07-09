@@ -1,4 +1,4 @@
-(defproject org.clojars.abhinav/snitch "0.0.7"
+(defproject org.clojars.abhinav/snitch "0.0.8"
   :description "Tools to gain insight into the data inside functions."
   :url "https://github.com/AbhinavOmprakash/snitch"
   :license {:name "MIT"
