@@ -34,7 +34,9 @@
      `(def ~arg ~arg)
      arg))
   ([name* arg]
-   (if (symbol? arg)
+   ;; FIXME: commenting out the history feature since it doesn't work with cljs yet
+   (arg->def-args arg)
+   #_(if (symbol? arg)
      `(do (def ~arg ~arg)
           (swap! ~name* update '~arg  (partial update-atom ~arg))
           (def ~(concat-symbols arg '>) (take @default-history-count (get (deref ~name*) '~arg)))
@@ -97,7 +99,9 @@
 
 
 
-(defn destructure [bindings]
+(defn destructure 
+  "Taken from cljs/core.cljc"
+  [bindings]
   (let [bents (partition 2 bindings)
              pb (fn pb [bvec b v]
                   (let [pvec
@@ -275,7 +279,8 @@
          [params* & body*] (maybe-destructured params body)
          atom-name (concat-symbols name '_)
          params-def (define-args params*)
-         params-def* (cons `(declare ~atom-name)
+;; FIXME commenting out the history feature because it doesn't work in cljs yet.
+         params-def* params-def #_(cons `(declare ~atom-name)
                            (cons (atom-for-fn atom-name)
                                  (cons (function-to-reset-atom name atom-name)
                                        params-def)))]
@@ -286,12 +291,14 @@
                   ~prepost-map?
                   (let [result# (do ~@(define-let-bindings atom-name body*))]
                     (def ~(concat-symbols name '<) result#)
-                    (def ~(concat-symbols name '>) (deref ~atom-name))
+;; FIXME commenting out the history feature because it doesn't work in cljs yet.
+                    #_(def ~(concat-symbols name '>) (deref ~atom-name))
                     result#))
        `(~params* ~@params-def*
                   (let [result# (do ~@(define-let-bindings atom-name body*))]
                     (def ~(concat-symbols name '<) result#)
-                    (def ~(concat-symbols name '>) (deref ~atom-name))
+;; FIXME commenting out the history feature because it doesn't work in cljs yet.
+                    #_(def ~(concat-symbols name '>) (deref ~atom-name))
                     result#))))))
 
 
@@ -325,7 +332,8 @@
         atom-name (concat-symbols name '_)
         params-def (when (some? params**)
                      (define-args atom-name params**))
-        params-def* (cons `(declare ~atom-name)
+        ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
+        params-def* params-def #_(cons `(declare ~atom-name)
                           (cons (atom-for-fn atom-name)
                                 (cons (function-to-reset-atom name atom-name)
                                       params-def)))
@@ -345,7 +353,8 @@
          (let [result#
                (do ~@body**)]
            (def ~(concat-symbols name '<) result#)
-           (def ~(concat-symbols name '>) (deref ~atom-name))
+;; FIXME commenting out the history feature because it doesn't work in cljs yet.
+           #_(def ~(concat-symbols name '>) (deref ~atom-name))
            result#)))))
 
 
