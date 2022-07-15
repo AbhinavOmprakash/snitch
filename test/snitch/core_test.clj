@@ -23,8 +23,8 @@
     (is (expansion-valid? (define-args ['a 'b])
                           ((def a a) (def b b))))))
 
-
-(deftest test-define-let-bindings
+;; move away from tests that test expansion.
+#_(deftest test-define-let-bindings
   (testing "body with let form as first form"
     (is (expansion-valid? (define-let-bindings '(let [a 1 b 2] a))
                           (let [a 1
@@ -71,7 +71,8 @@
                               (str x)
                               (let [i 3 _ (def i i)] i))))))
 
-  (testing "body with multiple non-nested lets"
+  ;; move away from tests that test the expansion of forms
+  #_(testing "body with multiple non-nested lets"
     (is (expansion-valid? (define-let-bindings '(do (let [a 1] (print a))
                                                     (let [b 2] (str b))
                                                     (let [c 3] (symbol c))))
@@ -81,7 +82,7 @@
                             (let [b 2 _ (def b b)] (str b))
                             (let [c 3 _ (def c c)] (symbol c))))))
 
-  (testing "let with destructuring"
+  #_(testing "let with destructuring"
     (is (expansion-valid? (define-let-bindings '(let [[a b] [1 2]
                                                       c 3]))
                           (let
