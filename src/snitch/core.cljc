@@ -1,5 +1,7 @@
 (ns snitch.core
-  (:refer-clojure :rename {destructure cc-destructure}))
+  (:refer-clojure :rename {destructure cc-destructure})
+  (:require
+    [clojure.string :as s]))
 
 
 (def default-history-count (atom 3))
@@ -8,6 +10,16 @@
 (defn alter-default-count!
   [n]
   (swap! default-history-count (constantly n)))
+
+
+(defn ->simple-symbol
+  [sym]
+  (if (simple-symbol? sym) sym
+      (-> sym
+          str
+          (s/split #"/")
+          last
+          symbol)))
 
 
 (defn concat-symbols
@@ -237,25 +249,6 @@
      (map #(define-let-bindings name* %) body))))
 
 
-(defn cljs
-  [a b]
-  (prn "cljs"))
-
-
-(defn clj
-  [a b]
-  (prn "clj"))
-
-
-(defn foo-bar
-  [x]
-  #?(:clj (clj 1 2)
-     :cljs (cljs 3 4)))
-
-
-(foo-bar 3)
-
-
 (defn maybe-destructured
   "Taken from clojure core.
   Defining it here so the code can be compatible with cljs."
@@ -274,6 +267,69 @@
         `(~new-params
           (let ~lets
             ~@body))))))
+
+
+(defn construct-map
+  [m]
+  (reduce-kv (fn [acc k v]
+               (cond
+                 (= :keys k)
+                 (into {} (concat acc
+                                  (map (fn [x] [(keyword x) (->simple-symbol x)])
+                                       v)))
+                 (= :as k)
+                 acc
+
+                 :else
+                 (assoc acc v (cond
+                                (map? k) (construct-map k)
+                                (vector? k) k
+                                :else (->simple-symbol k)))))
+             {}
+             m))
+
+
+(defn restructure
+  "Opposite of destructure. required for reconstructing a map.
+  vectors can have maps inside them."
+  [args]
+  (reduce (fn [acc x]
+            (cond
+              (map? x) (conj acc (construct-map x))
+              (vector? x) (conj acc (restructure x))
+              :else (conj acc x)))
+
+          []
+          args))
+
+
+#_(restructure '[ {{:keys [e f ] aye :a [z] :d} :b} ])
+
+
+(defn replay-function
+  "Returns a list to define a var with the name
+  of the function appended with a >. When evaluated,
+ the var will return a list with the name of the function and args to be passed.
+  "
+  ;; There is some hairy quoting going on here so let me explain
+  ;; let's say we have a function (defn* foo [x] x)
+  ;; and I call it (foo 1)
+  ;; what I want from `replay-function` is to define a 
+  ;; var such that when I evaluate it, it returns me a list (foo 1)
+  ;; that I can evaluate.
+  ;; notice that here foo is a symbol but 1 is the value of the symbol x
+  [name args]
+  `(def ~(concat-symbols name '>)
+     `(~'~name ~~@(restructure args))))
+
+
+(defn insert-replay-function
+  [name params body]
+  (if (and (seq? (first body))
+        (= `let (ffirst body)) )
+    (let [[[l* bind* & b*]] body]
+      (list (concat [l* bind*] (list (replay-function name params)) b*)))
+    (cons (replay-function name params) body)))
 
 
 (defn atom-for-fn
@@ -300,6 +356,8 @@
                 (rest form)
                 (rest (rest form)))
          [params* & body*] (maybe-destructured params body)
+         body** (insert-replay-function name params body*)
+
          atom-name (concat-symbols name '_)
          params-def (define-args params*)
          ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
@@ -312,13 +370,13 @@
      (if (some? prepost-map?)
        `(~params* ~@params-def*
                   ~prepost-map?
-                  (let [result# (do ~@(define-let-bindings atom-name body*))]
+                  (let [result# (do ~@(define-let-bindings atom-name body**))]
                     (def ~(concat-symbols name '<) result#)
                     ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
                     #_(def ~(concat-symbols name '>) (deref ~atom-name))
                     result#))
        `(~params* ~@params-def*
-                  (let [result# (do ~@(define-let-bindings atom-name body*))]
+                  (let [result# (do ~@(define-let-bindings atom-name body**))]
                     (def ~(concat-symbols name '<) result#)
                     ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
                     #_(def ~(concat-symbols name '>) (deref ~atom-name))
@@ -352,11 +410,12 @@
                nil)
         [params** & body*] (when (every? some? [body params*])
                              (maybe-destructured params* body))
-
-        _ (def params* params*)
-        _ (def body body)
-        _ (def params** params**)
         _ (def body* body*)
+        _ (def name name)
+        _ (def params* params*)
+
+        body** (insert-replay-function name params* body*)
+        _ (def body** body**)
         atom-name (concat-symbols name '_)
         params-def (when (some? params**)
                      (define-args #_atom-name params**))
@@ -365,8 +424,9 @@
                           (cons (atom-for-fn atom-name)
                                 (cons (function-to-reset-atom name atom-name)
                                       params-def)))
-        body** (when (some? body*)
-                 (define-let-bindings #_atom-name body*))
+        ;; should prolly check if params* is not nil
+        body*** (when (some? body**)
+                  (define-let-bindings #_atom-name body**))
         variadic-defs* (map #(define-in-variadic-forms name %) variadic-defs)
 
         args-to-defn (list doc-string? attr-map? params** prepost-map?)
@@ -379,10 +439,12 @@
       `(defn ~name ~@args-to-defn*
          ~@params-def*
          (let [result#
-               (do ~@body**)]
+               (do ~@body***)]
            (def ~(concat-symbols name '<) result#)
            ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
-           #_(def ~(concat-symbols name '>) (deref ~atom-name))
+           #_(def ~(concat-symbols name '>) (deref ~atom-name)
+               )
+
            result#)))))
 
 
@@ -406,3 +468,37 @@
                         ['this forms])
         exp (macroexpand-1 `(defn* ~name* ~@forms))]
     (cons 'fn (rest exp))))
+
+
+(comment 
+(macroexpand-1 '(defn* foo [x] x ) ); 
+
+(macroexpand-1 '(defn* foo [{:keys [a b] etch :h}] 
+    [a b etch]) )
+
+(restructure '[{{:keys [a]} :b}])
+
+(let [{{:keys [a]} :b} {:b {:a 1}} ] a)
+
+(macroexpand-1 '(defn* foo ([[x] ] x)
+    ([[x] [y]] 
+     [x y])) )
+
+(foo [[1]]  )
+foo* 
+(defn* foo [x] 
+     [ x ] )
+
+
+(foo 1 )
+
+(foo {:a 1 :b 2 :h 3 :d 4 :z 5 })
+
+foo* ; (foo {:a 1, :b 2, :h 3})
+(foo {:a 1, :b 2, :h 4})
+
+
+foo* 
+(let [[ [l* bind* & b*] ] body*]
+  (concat [ l*  bind*] (list '(def x 1 ) ) b* ))
+)

@@ -161,60 +161,81 @@
       (is (= expected-z foo2-z7))
       (is (= expected-p foo2-p1))
       (is (= expected-output foo2<))))
-;; FIXME commenting out the history feature because it doesn't work in cljs yet.
-  ; (testing "defn* stores history of the values. 
-  ;          Calling var> returns the last 3 values."
-  ;   (let [_ (defn* foo3 [foo3-p]
-  ;             (let [foo3-a (inc foo3-p)]
-  ;               #{foo3-p foo3-a}))
-  ;         _ (foo3 1)
-  ;         _ (foo3 2)
-  ;         _ (foo3 3)
-  ;         expected-foo3-p> '(3 2 1)
-  ;         expected-foo3-a> '(4 3 2)
-  ;         expected-foo3> {'foo3-p expected-foo3-p>
-  ;                         'foo3-a  expected-foo3-a>}]
 
-  ;     (is (= expected-foo3-p> foo3-p>))
-  ;     (is (= expected-foo3-a> foo3-a>))
-  ;     (is (= expected-foo3> foo3>))))
-;; FIXME commenting out the history feature because it doesn't work in cljs yet.
-  ; (testing "defn* stores history of the values. 
-  ;          Calling var>> with a number returns the last n values."
-  ;   (let [_ (defn* foo4 [foo4-p]
-  ;             foo4-p)
-  ;         _ (foo4 1)
-  ;         _ (foo4 2)
-  ;         _ (foo4 3)
-  ;         _ (foo4 4)
-  ;         _ (foo4 5)
-  ;         _ (foo4 6)
-  ;         ;; history is stored from most recent to least recent.
-  ;         all-foo4-p-values '(6 5 4 3 2 1)]
-  ;     (is (= (foo4-p>> 4)
-  ;            (take 4 all-foo4-p-values)))
-  ;     (is (= (foo4-p>> 5)
-  ;            (take 5 all-foo4-p-values)))
-  ;     (is (= (foo4-p>> 0)
-  ;            (take 0 all-foo4-p-values)))))
-;; FIXME commenting out the history feature because it doesn't work in cljs yet.
-    ;(testing "calling fn-name! resets the atom"
-    ; (let [_ (defn* foo5 [foo5-p]
-    ;           foo5-p)
-    ;       _ (foo5 1)
-    ;       _ (foo5 2)
-    ;       _ (foo5 3)
-    ;       _ (foo5 4)
-    ;       _ (foo5 5)
-    ;       _ (foo5 6)
-    ;       atom-value-before-reset @foo5_
-    ;       _ (foo5!) ; calling fn-name! to reset the atom
-    ;       atom-value-after-reset  @foo5_]
+  (testing "reconstructing function call"
+    (let [_ (defn* foo3 [foo3-1] foo3-1)
+          _ (foo3 "ace")
+          expected-foo3> '(foo3 "ace")]
+      (is (= expected-foo3> foo3>) "simple case with no destructuring"))
 
-    ;   (is (false? (empty? atom-value-before-reset)))
-    ;   (is (= atom-value-after-reset
-    ;          {}))))
-)
+    (let [_ (defn* foo4 [[foo4-1]] foo4-1)
+          _ (foo4 [1])
+          expected-foo4> '(foo4 [1])]
+      (is (= expected-foo4> foo4>) "simple case with vector destructuring"))
+
+    (let [_ (defn* foo5 [{:keys [foo4-1 foo4/a2] foo-4-three :foo4-3}] nil)
+          _ (foo5 {:foo4-1 1
+                   :foo4/a2 2
+                   :foo4-3 3})
+          expected-foo5> '(foo5 {:foo4-1 1, :foo4/a2 2, :foo4-3 3})] ; 
+      (is (= expected-foo5> foo5>) "Map destructuring")))
+
+
+
+  ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
+  ;; (testing "defn* stores history of the values.
+  ;;          Calling var> returns the last 3 values."
+  ;;   (let [_ (defn* foo3 [foo3-p]
+  ;;             (let [foo3-a (inc foo3-p)]
+  ;;               #{foo3-p foo3-a}))
+  ;;         _ (foo3 1)
+  ;;         _ (foo3 2)
+  ;;         _ (foo3 3)
+  ;;         expected-foo3-p> '(3 2 1)
+  ;;         expected-foo3-a> '(4 3 2)
+  ;;         expected-foo3> {'foo3-p expected-foo3-p>
+  ;;                         'foo3-a  expected-foo3-a>}]
+
+  ;;     (is (= expected-foo3-p> foo3-p>))
+  ;;     (is (= expected-foo3-a> foo3-a>))
+  ;;     (is (= expected-foo3> foo3>))))
+  ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
+  ;; (testing "defn* stores history of the values.
+  ;;          Calling var>> with a number returns the last n values."
+  ;;   (let [_ (defn* foo4 [foo4-p]
+  ;;             foo4-p)
+  ;;         _ (foo4 1)
+  ;;         _ (foo4 2)
+  ;;         _ (foo4 3)
+  ;;         _ (foo4 4)
+  ;;         _ (foo4 5)
+  ;;         _ (foo4 6)
+  ;;         ;; history is stored from most recent to least recent.
+  ;;         all-foo4-p-values '(6 5 4 3 2 1)]
+  ;;     (is (= (foo4-p>> 4)
+  ;;            (take 4 all-foo4-p-values)))
+  ;;     (is (= (foo4-p>> 5)
+  ;;            (take 5 all-foo4-p-values)))
+  ;;     (is (= (foo4-p>> 0)
+  ;;            (take 0 all-foo4-p-values)))))
+  ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
+  ;; (testing "calling fn-name! resets the atom"
+  ;; (let [_ (defn* foo5 [foo5-p]
+  ;;           foo5-p)
+  ;;       _ (foo5 1)
+  ;;       _ (foo5 2)
+  ;;       _ (foo5 3)
+  ;;       _ (foo5 4)
+  ;;       _ (foo5 5)
+  ;;       _ (foo5 6)
+  ;;       atom-value-before-reset @foo5_
+  ;;       _ (foo5!) ; calling fn-name! to reset the atom
+  ;;       atom-value-after-reset  @foo5_]
+
+  ;;   (is (false? (empty? atom-value-before-reset)))
+  ;;   (is (= atom-value-after-reset
+  ;;          {}))))
+  )
 
 
 ;; FIXME: rename vars to follow convention.
@@ -258,6 +279,20 @@
       a) )
   (foo 1)
 
+(macroexpand-1 '(defn* foo1 [{:keys [a/foo1-b1 foo1-c2]
+                foo1-dee3 :d
+                :as foo1-m4}
+               [foo1-x5 [foo1-y6 [foo1-z7]]]]
+    [foo1-b1 foo1-c2 foo1-dee3 foo1-m4 foo1-x5 foo1-y6 foo1-z7]) )
+
+(defn* foo1> [{:keys [a/b1 c2]
+                dee3 :d3
+                :as m4}
+               [x5 [y6 [z7]]]]
+    [b1 c2 dee3 m4 x5 y6 z7])
+
+
+
 (defn ^:private unmap-vars-for-fn!
   "Will unmap vars that have been globally defined by defn*.
   This only works with the test functions, because the test functions
@@ -275,4 +310,3 @@
 
 (filter #(clojure.string/starts-with? (str %) "foo3") (keys (ns-publics 'snitch.core-test)) )
   (map #(ns-unmap 'snitch.core-test %) (keys (ns-publics 'snitch.core-test)) ))
-
