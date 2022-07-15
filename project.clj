@@ -1,4 +1,4 @@
-(defproject org.clojars.abhinav/snitch "0.0.8"
+(defproject org.clojars.abhinav/snitch "0.0.9"
   :description "A repl-friendly, editor-agnostic, clojure and clojurescript debugger."
   :url "https://github.com/AbhinavOmprakash/snitch"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
