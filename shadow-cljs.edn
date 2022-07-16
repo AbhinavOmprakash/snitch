@@ -1,0 +1,12 @@
+;; shadow-cljs configuration
+{:source-paths
+ ["src/"
+  "test/"]
+
+ :dependencies []
+ :builds
+ {:test
+  {:target :karma
+   :output-to  "out/test.js"
+   :ns-regexp  "-test$"
+   :autorun true}}}

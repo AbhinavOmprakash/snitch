@@ -14,4 +14,8 @@ pom.xml.asc
 .calva/*
 .clj-kondo/*
 .lsp/*
+.shadow-cljs/*
+node_modules/*
+ab.sh
+out/*
 scratch.txt
