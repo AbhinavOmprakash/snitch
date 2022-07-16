@@ -1,0 +1,30 @@
+{
+  "name": "snitch",
+  "version": "1.0.0",
+  "description": "[![Clojars Project](https://img.shields.io/clojars/v/org.clojars.abhinav/snitch.svg)](https://clojars.org/org.clojars.abhinav/snitch)",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc",
+    "test": "test" 
+  },
+  "scripts": {
+  "test":  "shadow-cljs compile test && karma start --single-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AbhinavOmprakash/snitch.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AbhinavOmprakash/snitch/issues"
+  },
+  "homepage": "https://github.com/AbhinavOmprakash/snitch#readme",
+  "dependencies": {
+    "karma": "^6.4.0",
+    "karma-chrome-launcher": "^3.1.1",
+    "karma-cljs-test": "^0.1.0",
+    "shadow-cljs": "^2.19.6"
+  }
+}
