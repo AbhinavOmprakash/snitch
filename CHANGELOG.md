@@ -3,6 +3,7 @@ All notable changes to this project will be documented in this file. This change
 
 ## [0.0.9] - 2022-07-15
 - add ability to reconstruct a function call.
+- fix destructuring issues in cljs
 - Change license to EPL-2.0
 
 ## [0.0.8] - 2022-07-09
