@@ -1,9 +1,14 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
+## [0.0.10] - 2022-07-21
+- fix handling of `:or` in funtion definiton 
 
 ## [0.0.9] - 2022-07-15
+### Added
 - add ability to reconstruct a function call.
+### Fixed 
 - fix destructuring issues in cljs
+### Changed
 - Change license to EPL-2.0
 
 ## [0.0.8] - 2022-07-09
