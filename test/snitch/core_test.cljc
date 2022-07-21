@@ -135,6 +135,17 @@
       (is (= expected-z foo1-z7))
       (is (= expected-output foo1<))))
 
+  (testing "map destructuring and default args"
+    (let [_ (defn* foo107 [{:keys [foo107-a] :as foo107-m  :or {foo107-a 1}}]
+              foo107-a)
+          _ (foo107 {:foo107-a 2})
+          expected-foo107-a 2
+          expected-foo107-m  {:foo107-a 2}
+          expected-foo107>  '(foo107 {:foo107-a 2})]
+      (is (= expected-foo107-a foo107-a))
+      (is (= expected-foo107-m foo107-m))
+      (is (= expected-foo107>  foo107>))))
+
   (testing "destructuring in let body"
     (let [_ (defn* foo2 [foo2-p1]
               (let  [{:keys [a/foo2-b1 foo2-c2]
@@ -277,8 +288,6 @@
     (is (= b 2))))
 
 
-
-
 (comment 
   (macroexpand-1 '(defn* foo [{:keys [a]}]
       a) )
@@ -313,5 +322,7 @@
         (filterv #(s/starts-with? (str %) (str fn-name))
                  (keys (ns-publics 'snitch.core-test)))))
 
+
 (filter #(clojure.string/starts-with? (str %) "foo3") (keys (ns-publics 'snitch.core-test)) )
   (map #(ns-unmap 'snitch.core-test %) (keys (ns-publics 'snitch.core-test)) ))
+

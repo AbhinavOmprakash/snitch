@@ -223,6 +223,9 @@
                  (= :as k)
                  acc
 
+                 (= :or k)
+                 acc
+
                  :else
                  (assoc acc v (cond
                                 (map? k) (construct-map k)
@@ -244,9 +247,6 @@
 
           []
           args))
-
-
-#_(restructure '[ {{:keys [e f ] aye :a [z] :d} :b} ])
 
 
 (defn replay-function
