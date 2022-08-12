@@ -220,10 +220,7 @@
                  (into {} (concat acc
                                   (map (fn [x] [(keyword x) (->simple-symbol x)])
                                        v)))
-                 (= :as k)
-                 acc
-
-                 (= :or k)
+                 (#{:as :or} k)
                  acc
 
                  :else
@@ -243,6 +240,7 @@
             (cond
               (map? x) (conj acc (construct-map x))
               (vector? x) (conj acc (restructure x))
+              (= '& x) acc
               :else (conj acc x)))
 
           []

@@ -179,6 +179,14 @@
       (is (= expected-p foo2-p1))
       (is (= expected-output foo2<))))
 
+  ;; just want to test that the function compiles
+  ;; and runs
+  (testing "function with keyword arguments"
+    (let [_ (defn* foo10 [a__ & {:keys [x]}] a__)
+          _ (foo10 "ace")]
+      (is (= foo10>  '(foo10 "ace" {:x nil})))
+      (is (= foo10< "ace"))))
+
   (testing "reconstructing function call"
     (let [_ (defn* foo3 [foo3-1] foo3-1)
           _ (foo3 "ace")
@@ -325,4 +333,3 @@
 
 (filter #(clojure.string/starts-with? (str %) "foo3") (keys (ns-publics 'snitch.core-test)) )
   (map #(ns-unmap 'snitch.core-test %) (keys (ns-publics 'snitch.core-test)) ))
-
