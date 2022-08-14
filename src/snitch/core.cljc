@@ -13,6 +13,7 @@
           symbol)))
 
 
+;;  
 (defn keyword-ns
   "naive function to get the ns part of a namespaced keyword"
   [k]
