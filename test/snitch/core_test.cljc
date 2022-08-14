@@ -135,6 +135,17 @@
       (is (= expected-z foo1-z7))
       (is (= expected-output foo1<))))
 
+  (testing "Destructuring namespaced keywords with ns/keys syntax"
+    (let [_ (defn* foo6 [{:a/keys [foo6-b1 foo6-c2]}]
+              [foo6-b1 foo6-c2])
+          _ (foo6 {:a/foo6-b1 1 :a/foo6-c2 2})
+          expected-foo-6> '(foo6 #:a{:foo6-b1 1, :foo6-c2 2})
+          expected-b 1
+          expected-c 2]
+      (is (= expected-b foo6-b1))
+      (is (= expected-c foo6-c2))
+      (is (= expected-foo-6> '(foo6 #:a{:foo6-b1 1, :foo6-c2 2})))))
+
   (testing "map destructuring and default args"
     (let [_ (defn* foo107 [{:keys [foo107-a] :as foo107-m  :or {foo107-a 1}}]
               foo107-a)

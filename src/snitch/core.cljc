@@ -13,6 +13,17 @@
           symbol)))
 
 
+(defn keyword-ns
+  "naive function to get the ns part of a namespaced keyword"
+  [k]
+  (-> k
+      str
+      (s/split #"/")
+      first
+      (s/replace #":" "")
+      symbol))
+
+
 (defn concat-symbols
   [& symbols]
   (symbol (apply str symbols)))
@@ -212,14 +223,44 @@
                  ~@body))))))
 
 
+;; find better name
+(defn namespaced-destructuring
+  "namespaced maps can be destructured in two ways.
+  [{:keys [a/b]}] #:a{:b 1}
+  or 
+  [{:a/keys [b]}] #:a{:b 1}
+
+  This function handles the 2nd case. 
+  Converts the 2nd case to the first case 
+  "
+  [k v]
+  (let [v* (mapv (fn [sym]
+                   (concat-symbols (keyword-ns k) '/ sym))
+                 v)]
+    v*))
+
+
+;; find better name
+(defn values->hashmap
+  [acc v]
+  (into {} (concat acc
+                   (map (fn [x] [(keyword x) (->simple-symbol x)])
+                        v))))
+
+
 (defn construct-map
   [m]
   (reduce-kv (fn [acc k v]
                (cond
                  (= :keys k)
-                 (into {} (concat acc
-                                  (map (fn [x] [(keyword x) (->simple-symbol x)])
-                                       v)))
+                 (values->hashmap acc v)
+
+                 ;; if using other destructuring syntax
+                 ;; like [{:ns/keys [a b]}]
+                 (and (= (keyword (name k)) :keys)
+                      (not (= k :keys)))
+                 (values->hashmap acc (namespaced-destructuring k v))
+
                  (#{:as :or} k)
                  acc
 
