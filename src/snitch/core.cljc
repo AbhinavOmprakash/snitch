@@ -387,12 +387,23 @@
                       result#)))))
 
 
-;; FIXME: defmethod's arg history should be namespaced.
-;; method-name+dispatch-value 
 (defmacro defmethod*
   [name dispatch-value & forms]
-  `(defmethod ~name ~dispatch-value
-     ~@(map #(define-in-variadic-forms name %) forms)))
+  (let [head (first forms)
+         tail (rest forms)
+         ;; forms* needs to be a list of lists.(([a] a) ([a b] #{a b}))
+         forms* (cond
+                  (list? head) forms
+                  (symbol? head) (if (list? (first tail))
+                                   tail
+                                   (list tail))
+                  :else (list forms))
+         method-name (when (symbol? head) (first forms))]
+        (if method-name
+          `(defmethod ~name ~dispatch-value ~method-name
+             ~@(map #(define-in-variadic-forms name %) forms*))
+          `(defmethod ~name ~dispatch-value
+             ~@(map #(define-in-variadic-forms name %) forms*)))))
 
 
 (defmacro *let
@@ -400,16 +411,17 @@
   (define-let-bindings (cons 'let (cons bindings body))))
 
 
-(defmacro *fn
-  [& forms]
-  (let [[name* forms] (if (symbol? (first forms))
-                        [(first forms) (rest forms)]
-                        ['this forms])
-        exp (macroexpand-1 `(defn* ~name* ~@forms))]
-    (cons 'fn (rest exp))))
-
-
 (comment 
+
+  (defmulti foo identity)
+
+  (macroexpand-1 '(defmethod* foo :a name-of-metho [x] x) )
+  (foo :a)
+
+
+
+(foo :a)
+
 (macroexpand-1 '(defn* foo [[ x ]] x ) ); 
 
 (macroexpand-1 '(defn* foo [{:keys [a b] etch :h}] 
@@ -440,4 +452,8 @@ foo* ; (foo {:a 1, :b 2, :h 3})
 foo* 
 (let [[ [l* bind* & b*] ] body*]
   (concat [ l*  bind*] (list '(def x 1 ) ) b* ))
+
+( (*fn [x]
+       (if-let [y x]
+         x)) 1)
 )

@@ -276,13 +276,36 @@
 
 ;; FIXME: rename vars to follow convention.
 (deftest test-behaviour-of-defmethod*
+  (let [_ (defmulti foomethod1 (fn [a11 _]
+                                 a11))
+        - (defmethod* foomethod1 "a"
+            [a11 {:keys [d11] :as b11}] b11)
+        _ (foomethod1 "a" {:d11 :foomethod})]
+    (is (= "a" a11))
+    (is (= {:d11 :foomethod} b11))
+    (is (= :foomethod d11))
+    (is (= 2 c11)))
+
   (let [_ (defmulti foomethod (fn
                                 ([a11 _] a11)
                                 ([a11 _ _] a11)))
         - (defmethod* foomethod "a"
             ([a11 {:keys [d11] :as b11}] b11)
             ([a11 {:keys [d11] :as b11} c11] c11))
+
+        _ (defmethod* foomethod clojure.lang.Keyword
+            [a11 {:keys [d11] :as b11}] b11)
         _ (foomethod "a" {:d11 :foomethod} 2)]
+    (is (= "a" a11))
+    (is (= {:d11 :foomethod} b11))
+    (is (= :foomethod d11))
+    (is (= 2 c11)))
+
+  (let [_ (defmulti foomethod2 (fn [a11 _]
+                                 a11))
+        - (defmethod* foomethod2 "a" method-name
+            [a11 {:keys [d11] :as b11}] b11)
+        _ (foomethod2 "a" {:d11 :foomethod})]
     (is (= "a" a11))
     (is (= {:d11 :foomethod} b11))
     (is (= :foomethod d11))
