@@ -29,13 +29,21 @@
   (symbol (apply str symbols)))
 
 
-(defn binding-form?
+(defn let-form?
   [form]
   (boolean
     (when (seq? form)
       (some #{(first form)}
-            ['let 'if-let 'when-let
+            ['let
              'clojure.core/let]))))
+
+
+(defn expands-to-let?
+  [form]
+  (boolean
+    (when (seq? form)
+      (some #{(first form)}
+            ['if-let 'when-let]))))
 
 
 (defn arg->def-args
@@ -193,7 +201,10 @@
      (not (seq? body))
      body
 
-     (binding-form? body)
+     (expands-to-let? body)
+     (recur (macroexpand-1 body))
+
+     (let-form? body)
      (let [[l* bindings & inner-body] body
            inner-body* (define-let-bindings inner-body)]
        `(~l* ~(insert-into-let (cc-destructure bindings))
@@ -390,20 +401,20 @@
 (defmacro defmethod*
   [name dispatch-value & forms]
   (let [head (first forms)
-         tail (rest forms)
-         ;; forms* needs to be a list of lists.(([a] a) ([a b] #{a b}))
-         forms* (cond
-                  (list? head) forms
-                  (symbol? head) (if (list? (first tail))
-                                   tail
-                                   (list tail))
-                  :else (list forms))
-         method-name (when (symbol? head) (first forms))]
-        (if method-name
-          `(defmethod ~name ~dispatch-value ~method-name
-             ~@(map #(define-in-variadic-forms name %) forms*))
-          `(defmethod ~name ~dispatch-value
-             ~@(map #(define-in-variadic-forms name %) forms*)))))
+        tail (rest forms)
+        ;; forms* needs to be a list of lists.(([a] a) ([a b] #{a b}))
+        forms* (cond
+                 (list? head) forms
+                 (symbol? head) (if (list? (first tail))
+                                  tail
+                                  (list tail))
+                 :else (list forms))
+        method-name (when (symbol? head) (first forms))]
+    (if method-name
+      `(defmethod ~name ~dispatch-value ~method-name
+         ~@(map #(define-in-variadic-forms name %) forms*))
+      `(defmethod ~name ~dispatch-value
+         ~@(map #(define-in-variadic-forms name %) forms*)))))
 
 
 (defmacro *let
@@ -424,6 +435,14 @@
 
   (defmulti foo identity)
 
+(macroexpand-1 '(defn* foo [x] 
+                  (if-let [a x] 
+                    a 
+                    "x")) ) ; (defn foo [x] (def x x) (let [result__247__auto__ (do (def foo> (clojure.core/sequence (clojure.core/seq (clojure.core/concat (clojure.core/list (quote foo)) (clojure.core/list x))))) (clojure.core/let [temp__2062__auto__ x] (if temp__2062__auto__ (clojure.core/let [a temp__2062__auto__ _ (def a a)] a) x)))] (def foo< result__247__auto__) result__247__auto__))
+
+
+
+(foo nil)
   (macroexpand-1 '(defmethod* foo :a name-of-metho [x] x) )
   (foo :a)
 
