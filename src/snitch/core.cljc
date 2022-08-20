@@ -273,7 +273,8 @@
 
                  ;; if using other destructuring syntax
                  ;; like [{:ns/keys [a b]}]
-                 (and (= (keyword (name k)) :keys)
+                 (and (instance? clojure.lang.Named k)
+                      (= (keyword (name k)) :keys)
                       (not (= k :keys)))
                  (values->hashmap acc (namespaced-destructuring k v))
 
