@@ -114,9 +114,9 @@ I'd recommend adding snitch to your `~/.lein/profiles.clj`.
 An example file would be
 ```clojure
 ; profiles.clj
-{:user {:dependencies [[org.clojars.abhinav/snitch "0.0.11"]]}}
+{:user {:dependencies [[org.clojars.abhinav/snitch "0.0.12"]]}}
 
-{:dev {:dependencies [[org.clojars.abhinav/snitch "0.0.11"]]}}
+{:dev {:dependencies [[org.clojars.abhinav/snitch "0.0.12"]]}}
 ```
 
 
@@ -129,7 +129,7 @@ you can add the dependency to `~/.shadow-cljs/config.edn`
 
 ```clojure
 {:dependencies 
- [[org.clojars.abhinav/snitch "0.0.11"]]}
+ [[org.clojars.abhinav/snitch "0.0.12"]]}
 ```
 The import for clojurescript looks different. 
 

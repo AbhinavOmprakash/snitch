@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## [0.0.12] - 2022-08-20 
+### Fixed
+- fix reconstruction of nested maps
+
 ## [0.0.11] - 2022-08-20 
 ### Fixed
 - fix handling of funtions with keyword arguments.

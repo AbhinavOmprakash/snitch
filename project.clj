@@ -1,4 +1,4 @@
-(defproject org.clojars.abhinav/snitch "0.0.11"
+(defproject org.clojars.abhinav/snitch "0.0.12"
   :description "A repl-based, editor-agnostic, clojure and clojurescript debugger.
                In other words, inline-defs on steroids."
   :url "https://github.com/AbhinavOmprakash/snitch"
