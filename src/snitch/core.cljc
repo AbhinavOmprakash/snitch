@@ -203,7 +203,11 @@
      body
 
      (expands-to-let? body)
-     (recur (macroexpand-1 body))
+     ;; FIXME: for some reason macroexpand-1 throws a compilation error 
+     ;; in cljs
+     ;; figure out why later on. for now don't define args inside if-let and when-let
+     #?(:clj (define-let-bindings (macroexpand-1 body))
+        :cljs body)
 
      (let-form? body)
      (let [[l* bindings & inner-body] body
@@ -422,6 +426,7 @@
   [bindings & body]
   (define-let-bindings (cons 'let (cons bindings body))))
 
+
 (defmacro *fn
   [& forms]
   (let [[name* forms] (if (symbol? (first forms))
@@ -429,6 +434,7 @@
                         ['this forms])
         exp (macroexpand-1 `(defn* ~name* ~@forms))]
     (cons 'fn (rest exp))))
+
 
 (comment 
 
@@ -502,4 +508,4 @@ foo*
 ( (*fn [x]
        (if-let [y x]
          x)) 1)
-)
+))
