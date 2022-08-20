@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file. This change
 ### Fixed
 - fix handling of funtions with keyword arguments.
 - fix defmethod* .
-- fix handling of if-let and when-let.
+- fix handling of if-let and when-let for clj only (cljs has to be figured out)
 - fix handle destructuring of namespaced keywords when reconstructing funtion.
 
 
