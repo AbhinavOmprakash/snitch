@@ -422,6 +422,13 @@
   [bindings & body]
   (define-let-bindings (cons 'let (cons bindings body))))
 
+(defmacro *fn
+  [& forms]
+  (let [[name* forms] (if (symbol? (first forms))
+                        [(first forms) (rest forms)]
+                        ['this forms])
+        exp (macroexpand-1 `(defn* ~name* ~@forms))]
+    (cons 'fn (rest exp))))
 
 (comment 
 
