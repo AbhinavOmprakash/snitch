@@ -2,6 +2,8 @@
 
 [![Clojars Project](https://img.shields.io/clojars/v/org.clojars.abhinav/snitch.svg)](https://clojars.org/org.clojars.abhinav/snitch)
 
+> Snitch is inline-defs on steroids
+
 Snitch is how I debug and understand data flowing through my system.
 It's not a replacement for a full-fledged debugger, but it's pretty close and will be useful in 90% of the cases. 
 I use it as my sole debugger (in rare cases I reach for print statements). 
@@ -112,9 +114,9 @@ I'd recommend adding snitch to your `~/.lein/profiles.clj`.
 An example file would be
 ```clojure
 ; profiles.clj
-{:user {:dependencies [[org.clojars.abhinav/snitch "0.0.9"]]}}
+{:user {:dependencies [[org.clojars.abhinav/snitch "0.0.11"]]}}
 
-{:dev {:dependencies [[org.clojars.abhinav/snitch "0.0.9"]]}}
+{:dev {:dependencies [[org.clojars.abhinav/snitch "0.0.11"]]}}
 ```
 
 
@@ -127,7 +129,7 @@ you can add the dependency to `~/.shadow-cljs/config.edn`
 
 ```clojure
 {:dependencies 
- [[org.clojars.abhinav/snitch "0.0.9"]]}
+ [[org.clojars.abhinav/snitch "0.0.11"]]}
 ```
 The import for clojurescript looks different. 
 

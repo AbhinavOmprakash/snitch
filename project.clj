@@ -1,5 +1,6 @@
-(defproject org.clojars.abhinav/snitch "0.0.10"
-  :description "A repl-based, editor-agnostic, clojure and clojurescript debugger."
+(defproject org.clojars.abhinav/snitch "0.0.11"
+  :description "A repl-based, editor-agnostic, clojure and clojurescript debugger.
+               In other words, inline-defs on steroids."
   :url "https://github.com/AbhinavOmprakash/snitch"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
