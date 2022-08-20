@@ -423,14 +423,24 @@
   (define-let-bindings (cons 'let (cons bindings body))))
 
 
-(defmacro *fn
-  [& forms]
-  (let [[name* forms] (if (symbol? (first forms))
-                        [(first forms) (rest forms)]
-                        ['this forms])
-        exp (macroexpand-1 `(defn* ~name* ~@forms))]
-    (cons 'fn (rest exp))))
+(comment 
 
+  (defmulti foo identity)
+
+(macroexpand-1 '(defn* foo [x] 
+                  (if-let [a x] 
+                    a 
+                    "x")) ) ; (defn foo [x] (def x x) (let [result__247__auto__ (do (def foo> (clojure.core/sequence (clojure.core/seq (clojure.core/concat (clojure.core/list (quote foo)) (clojure.core/list x))))) (clojure.core/let [temp__2062__auto__ x] (if temp__2062__auto__ (clojure.core/let [a temp__2062__auto__ _ (def a a)] a) x)))] (def foo< result__247__auto__) result__247__auto__))
+
+
+
+(foo nil)
+  (macroexpand-1 '(defmethod* foo :a name-of-metho [x] x) )
+  (foo :a)
+
+
+
+(foo :a)
 
 (comment 
 
