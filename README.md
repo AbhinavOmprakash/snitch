@@ -4,6 +4,7 @@
 
 > Snitch is inline-defs on steroids
 
+
 Snitch is how I debug and understand data flowing through my system.
 It's not a replacement for a full-fledged debugger, but it's pretty close and will be useful in 90% of the cases. 
 I use it as my sole debugger (in rare cases I reach for print statements). 
@@ -13,6 +14,12 @@ I use it as my sole debugger (in rare cases I reach for print statements).
 - Editor agnostic (use it along with cider, conjure, calva, or cursive!).
 - Highly ergonomic for repl-driven development.
 
+# What people have to say ❤️ 
+> Very handy with those variants of the regular macros. Just add a `*` and you are inline def-ing the args! - Peter Strömberg (co-author of Calva)
+
+# Talk
+I gave a [talk](https://www.youtube.com/watch?v=WqilQulsJQc) about snitch at clojure Asia you can watch it 
+here https://www.youtube.com/watch?v=WqilQulsJQc.
 
 # Usage
 There are four macros `defn*`, `defmethod*` `*fn`, `*let`.
@@ -23,6 +30,10 @@ and also inside the let bindings of the functions.
 This makes it very "ergonomic" for repl-driven development.
 
 ## defn*
+
+defn* walks your clojure form and injects inline defs for all the bindings in the form.
+This includes the arguments as well as bindings inside a let body. 
+It also supports some binding forms like `if-let` and `when-let` (only for clj though, still trying to figure out cljs for this).
 
 ```clojure
 (require '[snitch.core :refer [defn*]])
@@ -110,6 +121,16 @@ foo1> ; (foo1 {:a/b1 1, :c2 2, :d3 3} [5 [6 [7]]])
 ;; for the function call. 
 ```
 
+injecting inline defs inside let forms
+```clojure
+(defn* foobar []
+  (let [a 1] a))
+
+(foobar) ; 1
+a ; 1
+
+```
+
 I'd recommend adding snitch to your `~/.lein/profiles.clj`.
 An example file would be
 ```clojure
@@ -119,6 +140,31 @@ An example file would be
 {:dev {:dependencies [[org.clojars.abhinav/snitch "0.0.12"]]}}
 ```
 
+## *let 
+*let will recursively inject inline defs for the all binding forms.
+```clojure
+(*let [a 1]
+      (let [b 2]   ; this isn't a *let but the top-level *let injects inline defs for this as well
+        (let [c 3] ; and for this too!
+          [a b c])))
+
+a ; 1
+b ; 2
+c ; 3
+```
+
+## *fn 
+Similar to `defn*`, will consider the name of the lambda function as `this` if not provided.
+
+```clojure
+((*fn [a]
+      (let [b :b]
+        [a b]))
+ :a)  ; [:a :b]
+a ; :a
+b ; :b
+this< ; [:a :b]
+```
 
 # Clojurescript support
 
