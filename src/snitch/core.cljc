@@ -3,7 +3,9 @@
     #?(:cljs
        (:require-macros
          [snitch.core]))
-    [clojure.string :as s]))
+    [cljs.analyzer :as ana]
+    [clojure.string :as s]
+    [clojure.walk :refer [prewalk]]))
 
 
 (defn ->simple-symbol
@@ -201,22 +203,17 @@
 
 (defn define-let-bindings
   ([body]
-   (let [body* (if (seq? body)
-                 ;; cljs doesn't support macroexpand. bummer
-                 #?(:clj (macroexpand body)
-                    :cljs body)
-                 body)]
-     (cond
-       (not (seq? body*))
-       body*
-       (let-form? body*)
-       (let [[l* bindings & inner-body] body*
+   (cond
+       (not (seq? body))
+       body
+       (let-form? body)
+       (let [[l* bindings & inner-body] body
              inner-body* (define-let-bindings inner-body)]
          `(~l* ~(insert-into-let (cc-destructure bindings))
                ~@inner-body*))
 
        :else
-       (map define-let-bindings body*)))))
+       (map define-let-bindings body))))
 
 
 (defn maybe-destructured
@@ -382,6 +379,30 @@
                          result#))))))
 
 
+(defn macroexpand*
+  "Like macroexpand but works with cljs."
+  [env form]
+  (if (contains? env :js-globals)
+    ;; cljs
+    (loop [form form
+           form* (ana/macroexpand-1 env form)]
+      (if-not (identical? form form*)
+        (recur form* (ana/macroexpand-1 env form*))
+        form*))
+    ;; clj
+    (macroexpand form)))
+
+
+(defn macroexpand-all
+  "Like clojure.walk/macroexpand-all but works with cljs."
+  [env form]
+  (prewalk (fn [x]
+             (if (seq? x)
+               (macroexpand* env x)
+               x))
+           form))
+
+
 (defmacro defn*
   [name & forms]
   (let [[doc-string? forms] (if (string? (first forms))
@@ -414,7 +435,7 @@
                      (define-args  params**))
         ;; should prolly check if params* is not nil
         body*** (when (some? body**)
-                  (define-let-bindings body**))
+                  (define-let-bindings (macroexpand-all &env body**)))
         variadic-defs* (map #(define-in-variadic-forms name %) variadic-defs)
 
         args-to-defn (list doc-string? attr-map? params** prepost-map?)
@@ -442,17 +463,18 @@
                                   tail
                                   (list tail))
                  :else (list forms))
+        forms** (macroexpand-all &env forms*)
         method-name (when (symbol? head) (first forms))]
     (if method-name
       `(defmethod ~name ~dispatch-value ~method-name
-         ~@(map #(define-in-variadic-forms name %) forms*))
+         ~@(map #(define-in-variadic-forms name %) forms**))
       `(defmethod ~name ~dispatch-value
-         ~@(map #(define-in-variadic-forms name %) forms*)))))
+         ~@(map #(define-in-variadic-forms name %) forms**)))))
 
 
 (defmacro *let
   [bindings & body]
-  (define-let-bindings (cons 'let (cons bindings body))))
+  (define-let-bindings (macroexpand-all &env (cons 'let (cons bindings body)))))
 
 
 (defmacro *fn
