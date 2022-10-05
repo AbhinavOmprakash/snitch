@@ -298,7 +298,11 @@
             (cond
               (map? x) (conj acc (construct-map x))
               (vector? x) (conj acc (restructure x))
-              (= '& x) acc
+              (= '& x) (let [tail (last args)
+                             keyword-args? (not (symbol? tail))]
+                         (if keyword-args?
+                           acc
+                           (reduced (conj acc `(vec ~tail)))))
               :else (conj acc x)))
 
           []
@@ -318,8 +322,14 @@
   ;; that I can evaluate.
   ;; notice that here foo is a symbol but 1 is the value of the symbol x
   [name args]
-  `(~'def ~(concat-symbols name '>)
-          `(~'~name ~~@(restructure args))))
+  (let [variadic? (contains? (set args) '&)
+        keyword-args? (not (symbol? (last args)))]
+    (if (and variadic?
+             (not keyword-args?))
+      `(~'def ~(concat-symbols name '>)
+              `(apply ~'~name ~~@(restructure args)))
+      `(~'def ~(concat-symbols name '>)
+              `(~'~name ~~@(restructure args))))))
 
 
 (defn insert-replay-function

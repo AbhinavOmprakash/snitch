@@ -1,17 +1,16 @@
 (ns snitch.core-test
-  (:require
-    #?(:clj [clojure.test :refer [deftest is testing]]
-       :cljs [cljs.test :refer [deftest is testing run-tests]])
-    #?(:clj [snitch.core :refer [concat-symbols define-args defn* define-let-bindings defmethod*
-                                 *let *fn]]
-       :cljs [snitch.core :refer-macros [defn*
-                                         defmethod*
-                                         *let *fn]
-              :refer [concat-symbols define-let-bindings define-args]])
-    #_[snitch.test-utils]))
+  #?(:clj
+     (:require
+       [clojure.test :refer [deftest is testing]]
+       [snitch.core :refer [concat-symbols define-args defn* define-let-bindings defmethod*
+                            *let *fn]])
+     :cljs
+     (do (:require [cljs.test :refer [deftest is testing run-tests]])
+         (:require-macros
+           [snitch.core]))))
 
 
-(deftest test-concat-symbols
+#_(deftest test-concat-symbols
   (testing "concat a symbol and a symbol"
     (is (= (concat-symbols 'a 'b) 'ab)))
 
@@ -227,9 +226,15 @@
                    :foo4/a2 2
                    :foo4-3 3})
           expected-foo5> '(foo5 {:foo4-1 1, :foo4/a2 2, :foo4-3 3})] ; 
-      (is (= expected-foo5> foo5>) "Map destructuring")))
+      (is (= expected-foo5> foo5>) "Map destructuring"))
 
+    (let [_ (defn* foo6 [a & more] [a more])
+          _ (foo6 1 2 3 4 5)
+          expected-foo6> '(clojure.core/apply foo6 1 [2 3 4 5])] ; 
+      (is (= expected-foo6> foo6>)
+          "reconstructing a function with variadic args")))
 
+(macroexpand-1 '(defn* foo6 [a & more] [a more]) )
 
   ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
   ;; (testing "defn* stores history of the values.
