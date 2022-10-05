@@ -1,9 +1,9 @@
 (ns snitch.core
   (:require
-    [clojure.string :as s])
-  #?(:cljs
-     (:require-macros
-       [snitch.core])))
+    #?(:cljs
+       (:require-macros
+         [snitch.core]))
+    [clojure.string :as s]))
 
 
 (defn ->simple-symbol
@@ -16,7 +16,6 @@
           symbol)))
 
 
-;;  
 (defn keyword-ns
   "naive function to get the ns part of a namespaced keyword"
   [k]
@@ -39,6 +38,7 @@
     (when (seq? form)
       (some #{(first form)}
             ['let
+             'let*
              'clojure.core/let]))))
 
 
@@ -47,7 +47,7 @@
   (boolean
     (when (seq? form)
       (some #{(first form)}
-            ['if-let 'when-let]))))
+            ['if-let 'when-let 'doseq]))))
 
 
 (defn arg->def-args
@@ -201,25 +201,22 @@
 
 (defn define-let-bindings
   ([body]
-   (cond
-     (not (seq? body))
-     body
+   (let [body* (if (seq? body)
+                 ;; cljs doesn't support macroexpand. bummer
+                 #?(:clj (macroexpand body)
+                    :cljs body)
+                 body)]
+     (cond
+       (not (seq? body*))
+       body*
+       (let-form? body*)
+       (let [[l* bindings & inner-body] body*
+             inner-body* (define-let-bindings inner-body)]
+         `(~l* ~(insert-into-let (cc-destructure bindings))
+               ~@inner-body*))
 
-     (expands-to-let? body)
-     ;; FIXME: for some reason macroexpand-1 throws a compilation error 
-     ;; in cljs
-     ;; figure out why later on. for now don't define args inside if-let and when-let
-     #?(:clj (define-let-bindings (macroexpand-1 body))
-        :cljs body)
-
-     (let-form? body)
-     (let [[l* bindings & inner-body] body
-           inner-body* (define-let-bindings inner-body)]
-       `(~l* ~(insert-into-let (cc-destructure bindings))
-             ~@inner-body*))
-
-     :else
-     (map define-let-bindings body))))
+       :else
+       (map define-let-bindings body*)))))
 
 
 (defn maybe-destructured
@@ -404,7 +401,6 @@
 
         args-to-defn (list doc-string? attr-map? params** prepost-map?)
         args-to-defn* (remove nil? args-to-defn)]
-
     (if (some? variadic-defs)
       `(~'defn ~name ~@args-to-defn*
                ~@variadic-defs*)

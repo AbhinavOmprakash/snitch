@@ -5,9 +5,11 @@
        [snitch.core :refer [concat-symbols define-args defn* define-let-bindings defmethod*
                             *let *fn]])
      :cljs
-     (do (:require [cljs.test :refer [deftest is testing run-tests]])
-         (:require-macros
-           [snitch.core]))))
+     (:require
+       [cljs.test :refer [deftest is testing run-tests]]))
+  #?(:cljs
+     (:require-macros
+       [snitch.core])))
 
 
 #_(deftest test-concat-symbols
@@ -103,8 +105,8 @@
                              c
                              3
                              _
-                             (def c c)])))))
 
+                             (def c c)])))))
 
 (deftest test-behaviour-of-defn*
   (testing "Destructuring in parameters"
@@ -136,16 +138,22 @@
 
   ;; for some reason macroexpand-1 throws a compilation erro
   ;; in cljs so commenting out the cljs tests for now
-  #?(:clj (testing "funtion with if-let and when-let"
-            (let [_ (defn* foo13 [a]
-                      (if-let [x a] x "a"))
-                  _ (foo13 1)]
-              (is (= 1 x)))
+  #?(:clj (testing "funtion with let-like binding forms"
+      (let [_ (defn* foo13 [a]
+                (if-let [x a] x "a"))
+            _ (foo13 1)]
+        (is (= 1 x)))
 
-            (let [_ (defn* foo13 [a]
-                      (when-let [x a] x))
-                  _ (foo13 1)]
-              (is (= 1 x)))))
+      (let [_ (defn* foo13 [a]
+                (when-let [x a] x))
+            _ (foo13 1)]
+        (is (= 1 x)))
+
+      (let [_ (defn* foo13 []
+                (doseq [x (range 10)]
+                  x))
+            _ (foo13)]
+        (is (= 9 x)))) )
 
   (testing "Destructuring namespaced keywords with ns/keys syntax"
     (let [_ (defn* foo6 [{:a/keys [foo6-b1 foo6-c2]}]
@@ -234,7 +242,7 @@
       (is (= expected-foo6> foo6>)
           "reconstructing a function with variadic args")))
 
-(macroexpand-1 '(defn* foo6 [a & more] [a more]) )
+
 
   ;; FIXME commenting out the history feature because it doesn't work in cljs yet.
   ;; (testing "defn* stores history of the values.
