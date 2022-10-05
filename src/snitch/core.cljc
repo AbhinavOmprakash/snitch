@@ -1,6 +1,9 @@
 (ns snitch.core
   (:require
-    [clojure.string :as s]))
+    [clojure.string :as s])
+  #?(:cljs
+     (:require-macros
+       [snitch.core])))
 
 
 (defn ->simple-symbol
@@ -445,6 +448,18 @@
                         ['this forms])
         exp (macroexpand-1 `(defn* ~name* ~@forms))]
     (cons 'fn (rest exp))))
+
+
+#?(:clj (do (intern 'clojure.core (with-meta 'defn* (meta #'defn*)) #'defn*)
+            (intern 'clojure.core (with-meta '*fn (meta #'*fn)) #'*fn)
+            (intern 'clojure.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
+            (intern 'clojure.core (with-meta '*let (meta #'*let)) #'*let)
+            (try
+              (intern 'cljs.core (with-meta 'defn* (meta #'defn*)) #'defn*)
+              (intern 'cljs.core (with-meta '*fn (meta #'*fn)) #'*fn)
+              (intern 'cljs.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
+              (intern 'cljs.core (with-meta '*let (meta #'*let)) #'*let)
+              (catch Exception _))))
 
 
 (comment 
