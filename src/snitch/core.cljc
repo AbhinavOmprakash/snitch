@@ -256,11 +256,27 @@
     v*))
 
 
+(def preserve-symbol?
+  "Certain values will get printed in a way that's not readable.
+  for e.g functions when evaluated return function Objects 
+  like this - 
+  identity 
+  ;=> #function[clojure.core/identity]
+  These can't be evaluated, so we preserve the symbol as it is.
+  "
+  (some-fn fn?))
+
+
 ;; find better name
 (defn values->hashmap
   [acc v]
   (into {} (concat acc
-                   (map (fn [x] [(keyword x) (->simple-symbol x)])
+                   (map (fn [x]
+                          (let [x* (->simple-symbol x)]
+                            [(keyword x)
+                             `(if ~(preserve-symbol? x*)
+                                '~x*
+                                ~x*)]))
                         v))))
 
 
@@ -303,7 +319,9 @@
                          (if keyword-args?
                            acc
                            (reduced (conj acc `(vec ~tail)))))
-              :else (conj acc x)))
+              :else (conj acc `(if ~(preserve-symbol? x)
+                                 '~x
+                                 ~x))))
 
           []
           args))
