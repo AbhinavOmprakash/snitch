@@ -44,12 +44,28 @@
              'clojure.core/let]))))
 
 
-(defn expands-to-let?
-  [form]
-  (boolean
-    (when (seq? form)
-      (some #{(first form)}
-            ['if-let 'when-let 'doseq]))))
+(defn macroexpand*
+  "Like macroexpand but works with cljs."
+  [env form]
+  (if (contains? env :js-globals)
+    ;; cljs
+    (loop [form form
+           form* (ana/macroexpand-1 env form)]
+      (if-not (identical? form form*)
+        (recur form* (ana/macroexpand-1 env form*))
+        form*))
+    ;; clj
+    (macroexpand form)))
+
+
+(defn macroexpand-all
+  "Like clojure.walk/macroexpand-all but works with cljs."
+  [env form]
+  (prewalk (fn [x]
+             (if (seq? x)
+               (macroexpand* env x)
+               x))
+           form))
 
 
 (defn arg->def-args
@@ -204,16 +220,15 @@
 (defn define-let-bindings
   ([body]
    (cond
-       (not (seq? body))
-       body
-       (let-form? body)
-       (let [[l* bindings & inner-body] body
-             inner-body* (define-let-bindings inner-body)]
-         `(~l* ~(insert-into-let (cc-destructure bindings))
-               ~@inner-body*))
-
-       :else
-       (map define-let-bindings body))))
+     (not (seq? body))
+     body
+     (let-form? body)
+     (let [[l* bindings & inner-body] body
+           inner-body* (define-let-bindings inner-body)]
+       `(~l* ~(insert-into-let (cc-destructure bindings))
+             ~@inner-body*))
+     :else
+     (map define-let-bindings body))))
 
 
 (defn maybe-destructured
@@ -377,30 +392,6 @@
                   (~'let [result# (~'do ~@(define-let-bindings body**))]
                          (~'def ~(concat-symbols name '<) result#)
                          result#))))))
-
-
-(defn macroexpand*
-  "Like macroexpand but works with cljs."
-  [env form]
-  (if (contains? env :js-globals)
-    ;; cljs
-    (loop [form form
-           form* (ana/macroexpand-1 env form)]
-      (if-not (identical? form form*)
-        (recur form* (ana/macroexpand-1 env form*))
-        form*))
-    ;; clj
-    (macroexpand form)))
-
-
-(defn macroexpand-all
-  "Like clojure.walk/macroexpand-all but works with cljs."
-  [env form]
-  (prewalk (fn [x]
-             (if (seq? x)
-               (macroexpand* env x)
-               x))
-           form))
 
 
 (defmacro defn*
