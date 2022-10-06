@@ -1,11 +1,11 @@
 (ns snitch.core
   (:require
-    #?(:cljs
-       (:require-macros
-         [snitch.core]))
     [cljs.analyzer :as ana]
     [clojure.string :as s]
-    [clojure.walk :refer [prewalk]]))
+    [clojure.walk :refer [prewalk]])
+  #?(:cljs
+     (:require-macros
+       [snitch.core])))
 
 
 (defn ->simple-symbol
@@ -294,28 +294,30 @@
 
 (defn construct-map
   [m]
-  (reduce-kv (fn [acc k v]
-               (cond
-                 (= :keys k)
-                 (values->hashmap acc v)
+  (if (contains? m :as)
+    (:as m)
+    (reduce-kv (fn [acc k v]
+                 (cond
+                   (= :keys k)
+                   (values->hashmap acc v)
 
-                 ;; if using other destructuring syntax
-                 ;; like [{:ns/keys [a b]}]
-                 (and (instance? clojure.lang.Named k)
-                      (= (keyword (name k)) :keys)
-                      (not (= k :keys)))
-                 (values->hashmap acc (namespaced-destructuring k v))
+                   ;; if using other destructuring syntax
+                   ;; like [{:ns/keys [a b]}]
+                   (and (instance? clojure.lang.Named k)
+                        (= (keyword (name k)) :keys)
+                        (not (= k :keys)))
+                   (values->hashmap acc (namespaced-destructuring k v))
 
-                 (#{:as :or} k)
-                 acc
+                   (#{:as :or} k)
+                   acc
 
-                 :else
-                 (assoc acc v (cond
-                                (map? k) (construct-map k)
-                                (vector? k) k
-                                :else (->simple-symbol k)))))
-             {}
-             m))
+                   :else
+                   (assoc acc v (cond
+                                  (map? k) (construct-map k)
+                                  (vector? k) k
+                                  :else (->simple-symbol k)))))
+               {}
+               m)))
 
 
 (defn restructure
@@ -487,78 +489,3 @@
               (intern 'cljs.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
               (intern 'cljs.core (with-meta '*let (meta #'*let)) #'*let)
               (catch Exception _))))
-
-
-(comment 
-
-  (defmulti foo identity)
-
-(macroexpand-1 '(defn* foo [x] 
-                  (if-let [a x] 
-                    a 
-                    "x")) ) ; (defn foo [x] (def x x) (let [result__247__auto__ (do (def foo> (clojure.core/sequence (clojure.core/seq (clojure.core/concat (clojure.core/list (quote foo)) (clojure.core/list x))))) (clojure.core/let [temp__2062__auto__ x] (if temp__2062__auto__ (clojure.core/let [a temp__2062__auto__ _ (def a a)] a) x)))] (def foo< result__247__auto__) result__247__auto__))
-
-
-
-(foo nil)
-  (macroexpand-1 '(defmethod* foo :a name-of-metho [x] x) )
-  (foo :a)
-
-
-
-(foo :a)
-
-(comment 
-
-  (defmulti foo identity)
-
-(macroexpand-1 '(defn* foo [x] 
-                  (if-let [a x] 
-                    a 
-                    "x")) ) ; (defn foo [x] (def x x) (let [result__247__auto__ (do (def foo> (clojure.core/sequence (clojure.core/seq (clojure.core/concat (clojure.core/list (quote foo)) (clojure.core/list x))))) (clojure.core/let [temp__2062__auto__ x] (if temp__2062__auto__ (clojure.core/let [a temp__2062__auto__ _ (def a a)] a) x)))] (def foo< result__247__auto__) result__247__auto__))
-
-
-
-(foo nil)
-  (macroexpand-1 '(defmethod* foo :a name-of-metho [x] x) )
-  (foo :a)
-
-
-
-(foo :a)
-
-(macroexpand-1 '(defn* foo [[ x ]] x ) ); 
-
-(macroexpand-1 '(defn* foo [{:keys [a b] etch :h}] 
-    [a b etch]) )
-
-(restructure '[{{:keys [a]} :b}])
-
-(let [{{:keys [a]} :b} {:b {:a 1}} ] a)
-
-(macroexpand-1 '(defn* foo ([[x] ] x)
-    ([[x] [y]] 
-     [x y])) )
-
-(foo [[1]]  )
-foo* 
-(defn* foo [x] 
-     [ x ] )
-
-
-(foo 1 )
-
-(foo {:a 1 :b 2 :h 3 :d 4 :z 5 })
-
-foo* ; (foo {:a 1, :b 2, :h 3})
-(foo {:a 1, :b 2, :h 4})
-
-
-foo* 
-(let [[ [l* bind* & b*] ] body*]
-  (concat [ l*  bind*] (list '(def x 1 ) ) b* ))
-
-( (*fn [x]
-       (if-let [y x]
-         x)) 1)
-))
