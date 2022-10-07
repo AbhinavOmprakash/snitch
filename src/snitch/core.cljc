@@ -1,4 +1,5 @@
 (ns snitch.core
+  (:refer-clojure :exclude [#?(:cljs macroexpand)])
   (:require
     [cljs.analyzer :as ana]
     [clojure.string :as s]
@@ -44,28 +45,28 @@
              'clojure.core/let]))))
 
 
-(defn macroexpand*
-  "Like macroexpand but works with cljs."
-  [env form]
-  (if (contains? env :js-globals)
-    ;; cljs
-    (loop [form form
-           form* (ana/macroexpand-1 env form)]
-      (if-not (identical? form form*)
-        (recur form* (ana/macroexpand-1 env form*))
-        form*))
-    ;; clj
-    (macroexpand form)))
+#?(:clj (defn macroexpand*
+    "Like macroexpand but works with cljs."
+    [env form]
+    (if (contains? env :js-globals)
+      ;; cljs
+      (loop [form form
+             form* (ana/macroexpand-1 env form)]
+        (if-not (identical? form form*)
+          (recur form* (ana/macroexpand-1 env form*))
+          form*))
+      ;; clj
+      (macroexpand form))) )
 
 
-(defn macroexpand-all
-  "Like clojure.walk/macroexpand-all but works with cljs."
-  [env form]
-  (prewalk (fn [x]
-             (if (seq? x)
-               (macroexpand* env x)
-               x))
-           form))
+#?(:clj (defn macroexpand-all
+    "Like clojure.walk/macroexpand-all but works with cljs."
+    [env form]
+    (prewalk (fn [x]
+               (if (seq? x)
+                 (macroexpand* env x)
+                 x))
+             form)) )
 
 
 (defn arg->def-args
