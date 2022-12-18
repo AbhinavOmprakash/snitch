@@ -13,4 +13,3 @@
             [lein-eftest "0.5.9"]]
   :repositories [["releases" {:url "https://repo.clojars.org"
                               :sign-releases false}]])
-

@@ -22,6 +22,22 @@ I gave a [talk](https://www.youtube.com/watch?v=WqilQulsJQc) about snitch at clo
 here https://www.youtube.com/watch?v=WqilQulsJQc.
 
 # Usage
+## Installation
+I recommend adding snitch to your `~/.lein/profiles.clj`.
+An example file would be
+```clojure
+; profiles.clj
+{:user {:dependencies [[org.clojars.abhinav/snitch "0.0.12"]]}}
+
+{:dev {:dependencies [[org.clojars.abhinav/snitch "0.0.12"]]}}
+```
+If you add it to your project's dev dependencies, you could add this line to your dev/user.clj
+```
+(require '[snitch.core :refer [defn* defmethod* *fn *let]])
+```
+requiring these macros once, will intern these macros inside clojure.core & cljs.core, so you don't have to import them in every namespace.
+
+## Overview
 There are four macros `defn*`, `defmethod*` `*fn`, `*let`.
 They are drop-in replacements for `defn`, `defmethod`, `fn`, and `let`.
 
@@ -130,16 +146,6 @@ injecting inline defs inside let forms
 a ; 1
 
 ```
-
-I'd recommend adding snitch to your `~/.lein/profiles.clj`.
-An example file would be
-```clojure
-; profiles.clj
-{:user {:dependencies [[org.clojars.abhinav/snitch "0.0.12"]]}}
-
-{:dev {:dependencies [[org.clojars.abhinav/snitch "0.0.12"]]}}
-```
-
 ## *let 
 *let will recursively inject inline defs for the all binding forms.
 ```clojure
@@ -185,9 +191,8 @@ The import for clojurescript looks different.
 
 # Integrating snitch in your workflow.
 
-Writing the `(require '[snitch.core :refer [defn*]])` in every namespace is cumbersome (if you know a way to globally define defn* for all namespaces let me know yesterday!).
+I have two vim macros that inject `(require '[snitch.core :refer [defn* defmethod* *fn *let]])` at the top of my ns, and evaluate it.
 
-I have two vim macros that inject require at the top of my ns, and evaluate it.
 
 ```vimrc
 "for clj
