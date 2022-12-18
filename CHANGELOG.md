@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## [0.0.13] 2022-12-18
+### Added
+- Support for binding forms like if-let, when-let, and other binding forms.
+- Intern the macros in clojure.core or cljs.core so the user only has to import it once and it will be available in every namespace.
+### Fixed
+- Fix cljs support for certain binding forms.
+- Support variadic arg functions when reconstructing function calls.
+- When reconstructing a function call, don't evaluate the function, because it results in a "function object" that can't be read back. Preserves the symbol instead.
+
 ## [0.0.12] - 2022-08-20 
 ### Fixed
 - fix reconstruction of nested maps
