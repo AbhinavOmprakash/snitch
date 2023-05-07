@@ -411,6 +411,7 @@
   (let [result  (prewalk (fn [form]
                            (if (fn-form? form)
                              `(*fn ~@(rest form))
+
                              form))
                          forms)]
     result))
@@ -478,7 +479,7 @@
 (defmacro defn*
   "like defn but injects inline defs for arguments and any let bindings, or lambdas inside it."
   [name & forms]
-  (let [exp (macroexpand `(*fn ~@(cons name forms)))]
+  (let [exp (macroexpand* &env `(*fn ~@(cons name forms)))]
     (cons 'defn (rest exp))))
 
 
@@ -517,13 +518,13 @@
 
 
 
- #?(:clj (do (intern 'clojure.core (with-meta 'defn* (meta #'defn*)) #'defn*)
-             (intern 'clojure.core (with-meta '*fn (meta #'*fn)) #'*fn)
-             (intern 'clojure.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
-             (intern 'clojure.core (with-meta '*let (meta #'*let)) #'*let)
-             (try
-               (intern 'cljs.core (with-meta 'defn* (meta #'defn*)) #'defn*)
-               (intern 'cljs.core (with-meta '*fn (meta #'*fn)) #'*fn)
-               (intern 'cljs.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
-               (intern 'cljs.core (with-meta '*let (meta #'*let)) #'*let)
-               (catch Exception _))))
+#?(:clj (do (intern 'clojure.core (with-meta 'defn* (meta #'defn*)) #'defn*)
+            (intern 'clojure.core (with-meta '*fn (meta #'*fn)) #'*fn)
+            (intern 'clojure.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
+            (intern 'clojure.core (with-meta '*let (meta #'*let)) #'*let)
+            (try
+              (intern 'cljs.core (with-meta 'defn* (meta #'defn*)) #'defn*)
+              (intern 'cljs.core (with-meta '*fn (meta #'*fn)) #'*fn)
+              (intern 'cljs.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
+              (intern 'cljs.core (with-meta '*let (meta #'*let)) #'*let)
+              (catch Exception _))))

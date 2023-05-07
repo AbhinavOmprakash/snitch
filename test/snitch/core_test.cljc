@@ -8,7 +8,8 @@
       [cljs.test :refer [deftest is testing run-tests]]))
   #?(:cljs
      (:require-macros
-      [snitch.core])))
+      [snitch.core]
+      [snitch.core-test :refer [let-to-fn] ])))
 
 
 (deftest test-behaviour-of-defn*
@@ -273,7 +274,9 @@
     (is (= y 2))))
 
 
-:clj( (defmacro let-to-fn [bindings & body]
+
+
+     (defmacro let-to-fn [bindings & body]
     (->> (partition 2 bindings)
          reverse
          (reduce (fn [acc [binding-sym val]]
@@ -281,11 +284,6 @@
                      `((fn [~binding-sym] ~@acc) ~val)
                      `((fn [~binding-sym] ~acc) ~val)))
                  body))) 
-(comment
-  (macroexpand-1 '(let-to-fn [a 1 b 2]
-                             (+ a b))))
-
-
 
 (deftest custom-let-macros
   (let [_ (defn* fn-with-custom-let-macro [x]
@@ -294,9 +292,15 @@
                        (+ x z)))
         _ (fn-with-custom-let-macro 10)]
     (is (= y 10))
-    (is (= z 11)))))
-(defn* foobar [a]
-  ((fn [b] b) a))
+    (is (= z 11))))
+(comment
+  (macroexpand-1 '(let-to-fn [a 1 b 2]
+                             (+ a b))))
+
+
+
+
+
 
 (comment
   (macroexpand-1 '(defn* foo [{:keys [a]}]
