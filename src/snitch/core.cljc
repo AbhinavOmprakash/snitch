@@ -1,12 +1,12 @@
 (ns snitch.core
   (:refer-clojure :exclude [#?(:cljs macroexpand)])
   (:require
-    [cljs.analyzer :as ana]
-    [clojure.string :as s]
-    [clojure.walk :refer [prewalk]])
+   [cljs.analyzer :as ana]
+   [clojure.string :as s]
+   [clojure.walk :refer [prewalk]])
   #?(:cljs
      (:require-macros
-       [snitch.core])))
+      [snitch.core])))
 
 
 (defn ->simple-symbol
@@ -38,35 +38,35 @@
 (defn let-form?
   [form]
   (boolean
-    (when (seq? form)
-      (some #{(first form)}
-            ['let
-             'let*
-             'clojure.core/let]))))
+   (when (seq? form)
+     (some #{(first form)}
+           ['let
+            'let*
+            'clojure.core/let]))))
 
 
 #?(:clj (defn macroexpand*
-    "Like macroexpand but works with cljs."
-    [env form]
-    (if (contains? env :js-globals)
+          "Like macroexpand but works with cljs."
+          [env form]
+          (if (contains? env :js-globals)
       ;; cljs
-      (loop [form form
-             form* (ana/macroexpand-1 env form)]
-        (if-not (identical? form form*)
-          (recur form* (ana/macroexpand-1 env form*))
-          form*))
+            (loop [form form
+                   form* (ana/macroexpand-1 env form)]
+              (if-not (identical? form form*)
+                (recur form* (ana/macroexpand-1 env form*))
+                form*))
       ;; clj
-      (macroexpand form))) )
+            (macroexpand form))))
 
 
 #?(:clj (defn macroexpand-all
-    "Like clojure.walk/macroexpand-all but works with cljs."
-    [env form]
-    (prewalk (fn [x]
-               (if (seq? x)
-                 (macroexpand* env x)
-                 x))
-             form)) )
+          "Like clojure.walk/macroexpand-all but works with cljs."
+          [env form]
+          (prewalk (fn [x]
+                     (if (seq? x)
+                       (macroexpand* env x)
+                       x))
+                   form)))
 
 
 (defn arg->def-args
@@ -135,24 +135,24 @@
                                            ret))))
                               bes (let [transforms
                                         (reduce
-                                          (fn [transforms mk]
-                                            (if (keyword? mk)
-                                              (let [mkns (namespace mk)
-                                                    mkn (name mk)]
-                                                (cond (= mkn "keys") (assoc transforms mk #(keyword (or mkns (namespace %)) (name %)))
-                                                      (= mkn "syms") (assoc transforms mk #(list `quote (symbol (or mkns (namespace %)) (name %))))
-                                                      (= mkn "strs") (assoc transforms mk str)
-                                                      :else transforms))
-                                              transforms))
-                                          {}
-                                          (keys b))]
+                                         (fn [transforms mk]
+                                           (if (keyword? mk)
+                                             (let [mkns (namespace mk)
+                                                   mkn (name mk)]
+                                               (cond (= mkn "keys") (assoc transforms mk #(keyword (or mkns (namespace %)) (name %)))
+                                                     (= mkn "syms") (assoc transforms mk #(list `quote (symbol (or mkns (namespace %)) (name %))))
+                                                     (= mkn "strs") (assoc transforms mk str)
+                                                     :else transforms))
+                                             transforms))
+                                         {}
+                                         (keys b))]
                                     (reduce
-                                      (fn [bes entry]
-                                        (reduce #(assoc %1 %2 ((val entry) %2))
-                                                (dissoc bes (key entry))
-                                                ((key entry) bes)))
-                                      (dissoc b :as :or)
-                                      transforms))]
+                                     (fn [bes entry]
+                                       (reduce #(assoc %1 %2 ((val entry) %2))
+                                               (dissoc bes (key entry))
+                                               ((key entry) bes)))
+                                     (dissoc b :as :or)
+                                     transforms))]
                          (if (seq bes)
                            (let [bb (key (first bes))
                                  bk (val (first bes))
@@ -173,15 +173,15 @@
                  (vector? b) (pvec bvec b v)
                  (map? b) (pmap bvec b v)
                  :else (throw
-                         #?(:clj (new Exception (str "Unsupported binding form: " b))
-                            :cljs (new js/Error (str "Unsupported binding form: " b)))))))
+                        #?(:clj (new Exception (str "Unsupported binding form: " b))
+                           :cljs (new js/Error (str "Unsupported binding form: " b)))))))
         process-entry (fn [bvec b] (pb bvec (first b) (second b)))]
     (if (every? symbol? (map first bents))
       bindings
       (if-let [kwbs (seq (filter #(keyword? (first %)) bents))]
         (throw
-          #?(:clj (new Exception (str "Unsupported binding key: " (ffirst kwbs)))
-             :cljs (new js/Error (str "Unsupported binding key: " (ffirst kwbs)))))
+         #?(:clj (new Exception (str "Unsupported binding key: " (ffirst kwbs)))
+            :cljs (new js/Error (str "Unsupported binding key: " (ffirst kwbs)))))
         (reduce process-entry [] bents)))))
 
 
@@ -218,11 +218,12 @@
            (partition 2 bindings))))
 
 
+
+
 (defn define-let-bindings
   ([body]
    (cond
-     (not (seq? body))
-     body
+     (not (seq? body)) body
      (let-form? body)
      (let [[l* bindings & inner-body] body
            inner-body* (define-let-bindings inner-body)]
@@ -396,10 +397,32 @@
                          (~'def ~(concat-symbols name '<) result#)
                          result#))))))
 
+(defn fn-form?
+  "Returns true if `form` is a lambda form. anything with `(fn ...)` is a lambda form"
+  [form]
+  (boolean
+   (when (seq? form)
+     (some #{(first form)}
+           ['fn 'fn* 'clojure.core/fn*]))))
 
-(defmacro defn*
-  [name & forms]
-  (let [[doc-string? forms] (if (string? (first forms))
+(defn replace-fn-with-*fn
+  "Replaces all occurences of `fn` with `*fn`"
+  [forms]
+  (let [result  (prewalk (fn [form]
+                           (if (fn-form? form)
+                             `(*fn ~@(rest form))
+                             form))
+                         forms)]
+    result))
+
+(defmacro *fn
+  "Like the fn macro but injects inline defs for the arguments 
+   and any let bindings, or lambdas inside it."
+  [& forms]
+  (let [[name forms] (if (symbol? (first forms))
+                       [(first forms) (rest forms)]
+                       ['this forms])
+        [doc-string? forms] (if (string? (first forms))
                               [(first forms) (rest forms)]
                               [nil forms])
         [attr-map? forms] (if (map? (first forms))
@@ -411,12 +434,12 @@
         [prepost-map? forms] (if (and (some? params*)
                                       (map? (first forms))
                                       (or
-                                        (vector? (:pre (first forms)))
-                                        (vector? (:post (first forms)))))
+                                       (vector? (:pre (first forms)))
+                                       (vector? (:post (first forms)))))
                                [(first forms) (rest forms)]
                                [nil forms])
         [variadic-defs forms] (if (and (nil? params*)
-                                       (list? (first forms)))
+                                       (seq? (first forms)))
                                 [forms nil]
                                 [nil forms])
         body (if (nil? variadic-defs)
@@ -429,24 +452,38 @@
                      (define-args  params**))
         ;; should prolly check if params* is not nil
         body*** (when (some? body**)
-                  (define-let-bindings (macroexpand-all &env body**)))
+                  (->> body**
+                       (macroexpand-all &env)
+                       replace-fn-with-*fn
+                       (define-let-bindings)))
         variadic-defs* (map #(define-in-variadic-forms name %) variadic-defs)
 
         args-to-defn (list doc-string? attr-map? params** prepost-map?)
+        ; the defn* in args-to-defn* is not the same as as defn* macro
+        ; its just used to distinguish it from args-to-defn
         args-to-defn* (remove nil? args-to-defn)]
     (if (some? variadic-defs)
-      `(~'defn ~name ~@args-to-defn*
-               ~@variadic-defs*)
+      `(~'fn ~name ~@args-to-defn*
+             ~@variadic-defs*)
 
-      `(~'defn ~name ~@args-to-defn*
-               ~@params-def
-               (~'let [result#
-                       (~'do ~@body***)]
-                      (~'def ~(concat-symbols name '<) result#)
-                      result#)))))
+      `(~'fn ~name ~@args-to-defn*
+             ~@params-def
+             (~'let [result#
+                     (~'do ~@body***)]
+                    (~'def ~(concat-symbols name '<) result#)
+                    result#)))))
+
+
+
+(defmacro defn*
+  "like defn but injects inline defs for arguments and any let bindings, or lambdas inside it."
+  [name & forms]
+  (let [exp (macroexpand `(*fn ~@(cons name forms)))]
+    (cons 'defn (rest exp))))
 
 
 (defmacro defmethod*
+  "like defmethod but injects inline defs for arguments and any let bindings, or lambdas inside it."
   [name dispatch-value & forms]
   (let [head (first forms)
         tail (rest forms)
@@ -457,7 +494,9 @@
                                   tail
                                   (list tail))
                  :else (list forms))
-        forms** (macroexpand-all &env forms*)
+        forms** (->>  forms*
+                      (macroexpand-all &env)
+                      replace-fn-with-*fn)
         method-name (when (symbol? head) (first forms))]
     (if method-name
       `(defmethod ~name ~dispatch-value ~method-name
@@ -467,26 +506,24 @@
 
 
 (defmacro *let
+  "like let but injects inline defs for bindings and any let forms, or lambdas inside it."
   [bindings & body]
-  (define-let-bindings (macroexpand-all &env (cons 'let (cons bindings body)))))
+  (->> body
+       (cons bindings)
+       (cons 'let)
+       (macroexpand-all &env)
+       replace-fn-with-*fn
+       (define-let-bindings)))
 
 
-(defmacro *fn
-  [& forms]
-  (let [[name* forms] (if (symbol? (first forms))
-                        [(first forms) (rest forms)]
-                        ['this forms])
-        exp (macroexpand-1 `(defn* ~name* ~@forms))]
-    (cons 'fn (rest exp))))
 
-
-#?(:clj (do (intern 'clojure.core (with-meta 'defn* (meta #'defn*)) #'defn*)
-            (intern 'clojure.core (with-meta '*fn (meta #'*fn)) #'*fn)
-            (intern 'clojure.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
-            (intern 'clojure.core (with-meta '*let (meta #'*let)) #'*let)
-            (try
-              (intern 'cljs.core (with-meta 'defn* (meta #'defn*)) #'defn*)
-              (intern 'cljs.core (with-meta '*fn (meta #'*fn)) #'*fn)
-              (intern 'cljs.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
-              (intern 'cljs.core (with-meta '*let (meta #'*let)) #'*let)
-              (catch Exception _))))
+ #?(:clj (do (intern 'clojure.core (with-meta 'defn* (meta #'defn*)) #'defn*)
+             (intern 'clojure.core (with-meta '*fn (meta #'*fn)) #'*fn)
+             (intern 'clojure.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
+             (intern 'clojure.core (with-meta '*let (meta #'*let)) #'*let)
+             (try
+               (intern 'cljs.core (with-meta 'defn* (meta #'defn*)) #'defn*)
+               (intern 'cljs.core (with-meta '*fn (meta #'*fn)) #'*fn)
+               (intern 'cljs.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
+               (intern 'cljs.core (with-meta '*let (meta #'*let)) #'*let)
+               (catch Exception _))))
