@@ -48,8 +48,7 @@ This makes it very "ergonomic" for repl-driven development.
 ## defn*
 
 defn* walks your clojure form and injects inline defs for all the bindings in the form.
-This includes the arguments as well as bindings inside a let body. 
-It also supports some binding forms like `if-let` and `when-let` (only for clj though, still trying to figure out cljs for this).
+This includes the arguments as well as bindings inside a let body, and any lambda function. 
 
 ```clojure
 (require '[snitch.core :refer [defn*]])
@@ -146,8 +145,19 @@ injecting inline defs inside let forms
 a ; 1
 
 ```
+
+injecting inline defs inside lambda forms
+```clojure
+(defn* foobar [a]
+  ((fn [b] b) a))
+
+(foobar 4) ; 1
+a ; 4
+b ; 4
+```
+
 ## *let 
-*let will recursively inject inline defs for the all binding forms.
+*let will recursively inject inline defs for the all binding forms including any lambda forms.
 ```clojure
 (*let [a 1]
       (let [b 2]   ; this isn't a *let but the top-level *let injects inline defs for this as well

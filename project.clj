@@ -1,4 +1,4 @@
-(defproject org.clojars.abhinav/snitch "0.1.13"
+(defproject org.clojars.abhinav/snitch "0.1.14-SNAPSHOT"
   :description
   "Snitch injects inline defs in your functions and multimethods.
                 This enables a repl-based, editor-agnostic, clojure and clojurescript debugging workflow. 

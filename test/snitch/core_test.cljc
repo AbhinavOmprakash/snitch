@@ -1,15 +1,15 @@
 (ns snitch.core-test
   #?(:clj
      (:require
-       [clojure.test :refer [deftest is testing]]
-       [snitch.core :refer [concat-symbols define-args defn* define-let-bindings defmethod*
-                            *let *fn]])
+      [clojure.test :refer [deftest is testing]]
+      [snitch.core :refer [concat-symbols define-args defn* define-let-bindings defmethod* *let *fn]])
      :cljs
      (:require
-       [cljs.test :refer [deftest is testing run-tests]]))
+      [cljs.test :refer [deftest is testing run-tests]]))
   #?(:cljs
      (:require-macros
-       [snitch.core])))
+      [snitch.core]
+      [snitch.core-test :refer [let-to-fn] ])))
 
 
 (deftest test-behaviour-of-defn*
@@ -56,6 +56,12 @@
                 x))
           _ (foo13)]
       (is (= 9 x))))
+
+  (testing "lambdas inside defn"
+    (let [_ (defn* foo-14 [a]
+              ((fn [x] (inc x)) a))
+          _ (foo-14 3)]
+      (is (= 3 x))))
 
 
   (testing "Destructuring namespaced keywords with ns/keys syntax"
@@ -150,56 +156,56 @@
   ;;   FIXME commenting out the history feature because it doesn't work in cljs yet.
   #_(testing "defn* stores history of the values.
             Calling var> returns the last 3 values."
-    (let [_ (defn* foo3 [foo3-p]
-              (let [foo3-a (inc foo3-p)]
-                #{foo3-p foo3-a}))
-          _ (foo3 1)
-          _ (foo3 2)
-          _ (foo3 3)
-          expected-foo3-p> '(3 2 1)
-          expected-foo3-a> '(4 3 2)
-          expected-foo3> {'foo3-p expected-foo3-p>
-                          'foo3-a  expected-foo3-a>}]
+      (let [_ (defn* foo3 [foo3-p]
+                (let [foo3-a (inc foo3-p)]
+                  #{foo3-p foo3-a}))
+            _ (foo3 1)
+            _ (foo3 2)
+            _ (foo3 3)
+            expected-foo3-p> '(3 2 1)
+            expected-foo3-a> '(4 3 2)
+            expected-foo3> {'foo3-p expected-foo3-p>
+                            'foo3-a  expected-foo3-a>}]
 
-      (is (= expected-foo3-p> foo3-p>))
-      (is (= expected-foo3-a> foo3-a>))
-      (is (= expected-foo3> foo3>))))
+        (is (= expected-foo3-p> foo3-p>))
+        (is (= expected-foo3-a> foo3-a>))
+        (is (= expected-foo3> foo3>))))
   ;;   FIXME commenting out the history feature because it doesn't work in cljs yet.
   #_(testing "defn* stores history of the values.
             Calling var>> with a number returns the last n values."
-    (let [_ (defn* foo4 [foo4-p]
-              foo4-p)
-          _ (foo4 1)
-          _ (foo4 2)
-          _ (foo4 3)
-          _ (foo4 4)
-          _ (foo4 5)
-          _ (foo4 6)
+      (let [_ (defn* foo4 [foo4-p]
+                foo4-p)
+            _ (foo4 1)
+            _ (foo4 2)
+            _ (foo4 3)
+            _ (foo4 4)
+            _ (foo4 5)
+            _ (foo4 6)
           ;; history is stored from most recent to least recent.
-          all-foo4-p-values '(6 5 4 3 2 1)]
-      (is (= (foo4-p>> 4)
-             (take 4 all-foo4-p-values)))
-      (is (= (foo4-p>> 5)
-             (take 5 all-foo4-p-values)))
-      (is (= (foo4-p>> 0)
-             (take 0 all-foo4-p-values)))))
+            all-foo4-p-values '(6 5 4 3 2 1)]
+        (is (= (foo4-p>> 4)
+               (take 4 all-foo4-p-values)))
+        (is (= (foo4-p>> 5)
+               (take 5 all-foo4-p-values)))
+        (is (= (foo4-p>> 0)
+               (take 0 all-foo4-p-values)))))
   ;;  FIXME commenting out the history feature because it doesn't work in cljs yet.
   #_(testing "calling fn-name! resets the atom"
-    (let [_ (defn* foo5 [foo5-p]
-              foo5-p)
-          _ (foo5 1)
-          _ (foo5 2)
-          _ (foo5 3)
-          _ (foo5 4)
-          _ (foo5 5)
-          _ (foo5 6)
-          atom-value-before-reset @foo5_
-          _ (foo5!) ; calling fn-name! to reset the atom
-          atom-value-after-reset  @foo5_]
+      (let [_ (defn* foo5 [foo5-p]
+                foo5-p)
+            _ (foo5 1)
+            _ (foo5 2)
+            _ (foo5 3)
+            _ (foo5 4)
+            _ (foo5 5)
+            _ (foo5 6)
+            atom-value-before-reset @foo5_
+            _ (foo5!) ; calling fn-name! to reset the atom
+            atom-value-after-reset  @foo5_]
 
-      (is (false? (empty? atom-value-before-reset)))
-      (is (= atom-value-after-reset
-             {})))))
+        (is (false? (empty? atom-value-before-reset)))
+        (is (= atom-value-after-reset
+               {})))))
 
 
 ;; FIXME: rename vars to follow convention.
@@ -234,7 +240,6 @@
     (is (= {:d11 :foomethod} b11))
     (is (= :foomethod d11))))
 
-
 (deftest test-*let
   (let [_ (*let [a 1
                  [b c] [2 3]]
@@ -250,30 +255,74 @@
                 [a b])
            1 2)]
     (is (= a 1))
-    (is (= b 2))))
+    (is (= b 2)))
+  (let [_ ((*fn [a b]
+                ((fn [x y]
+                   [x y]) a b))
+           1 2)]
+    (is (= a 1))
+    (is (= b 2))
+    (is (= x 1))
+    (is (= y 2)))
+  (let [_ ((*fn [a b]
+                ((fn ([x] x)
+                   ([x y] [x y])) a b))
+           1 2)]
+    (is (= a 1))
+    (is (= b 2))
+    (is (= x 1))
+    (is (= y 2))))
+
+
+
+
+     (defmacro let-to-fn [bindings & body]
+    (->> (partition 2 bindings)
+         reverse
+         (reduce (fn [acc [binding-sym val]]
+                   (if (= acc body)
+                     `((fn [~binding-sym] ~@acc) ~val)
+                     `((fn [~binding-sym] ~acc) ~val)))
+                 body))) 
+
+(deftest custom-let-macros
+  (let [_ (defn* fn-with-custom-let-macro [x]
+            (let-to-fn [y x
+                        z (inc x)]
+                       (+ x z)))
+        _ (fn-with-custom-let-macro 10)]
+    (is (= y 10))
+    (is (= z 11))))
+(comment
+  (macroexpand-1 '(let-to-fn [a 1 b 2]
+                             (+ a b))))
+
+
+
+
 
 
 (comment
-   (macroexpand-1 '(defn* foo [{:keys [a]}]
-       a) )
-   (foo 1)
+  (macroexpand-1 '(defn* foo [{:keys [a]}]
+                    a))
+  (foo 1)
 
- (macroexpand-1 '(defn* foo1 [{:keys [a/foo1-b1 foo1-c2]
-                 foo1-dee3 :d
-                 :as foo1-m4}
-                [foo1-x5 [foo1-y6 [foo1-z7]]]]
-     [foo1-b1 foo1-c2 foo1-dee3 foo1-m4 foo1-x5 foo1-y6 foo1-z7]) )
+  (macroexpand-1 '(defn* foo1 [{:keys [a/foo1-b1 foo1-c2]
+                                foo1-dee3 :d
+                                :as foo1-m4}
+                               [foo1-x5 [foo1-y6 [foo1-z7]]]]
+                    [foo1-b1 foo1-c2 foo1-dee3 foo1-m4 foo1-x5 foo1-y6 foo1-z7]))
 
- (defn* foo1> [{:keys [a/b1 c2]
+  (defn* foo1> [{:keys [a/b1 c2]
                  dee3 :d3
                  :as m4}
                 [x5 [y6 [z7]]]]
-     [b1 c2 dee3 m4 x5 y6 z7])
+    [b1 c2 dee3 m4 x5 y6 z7])
 
 
 
- (defn ^:private unmap-vars-for-fn!
-   "Will unmap vars that have been globally defined by defn*.
+  (defn ^:private unmap-vars-for-fn!
+    "Will unmap vars that have been globally defined by defn*.
    This only works with the test functions, because the test functions
    follow the convention of fn-name-arg-name.
    for e.g
@@ -282,11 +331,14 @@
        [bar-arg1 bar-arg2]))
 
    `fn-name` is a symbol."
-   [fn-name]
-   (mapv (partial ns-unmap 'snitch.core-test)
-         (filterv #(s/starts-with? (str %) (str fn-name))
-                  (keys (ns-publics 'snitch.core-test)))))
+    [fn-name]
+    (mapv (partial ns-unmap 'snitch.core-test)
+          (filterv #(s/starts-with? (str %) (str fn-name))
+                   (keys (ns-publics 'snitch.core-test)))))
 
 
- (filter #(clojure.string/starts-with? (str %) "foo3") (keys (ns-publics 'snitch.core-test)) )
-   (map #(ns-unmap 'snitch.core-test %) (keys (ns-publics 'snitch.core-test)) ))
+  (filter #(clojure.string/starts-with? (str %) "foo3") (keys (ns-publics 'snitch.core-test)))
+  (map #(ns-unmap 'snitch.core-test %) (keys (ns-publics 'snitch.core-test))))
+
+
+
