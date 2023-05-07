@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## Current
+### Added 
+- Recursively inject inline defs inside lambda  functions.
+- Insert inline defs inside lambda functions contained in methods and other functions
+
 ## [0.1.13] 2022-12-18
 ### Added
 - Support for binding forms like if-let, when-let, and other binding forms.
