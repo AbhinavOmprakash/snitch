@@ -5,10 +5,10 @@
   "main": "index.js",
   "directories": {
     "doc": "doc",
-    "test": "test" 
+    "test": "test"
   },
   "scripts": {
-  "test":  "shadow-cljs compile test && karma start --single-run"
+    "test": "shadow-cljs compile test && karma start --single-run"
   },
   "repository": {
     "type": "git",
@@ -22,9 +22,11 @@
   },
   "homepage": "https://github.com/AbhinavOmprakash/snitch#readme",
   "dependencies": {
-    "karma": "^6.4.0",
     "karma-chrome-launcher": "^3.1.1",
     "karma-cljs-test": "^0.1.0",
     "shadow-cljs": "^2.19.6"
+  },
+  "devDependencies": {
+    "karma": "^6.4.2"
   }
 }

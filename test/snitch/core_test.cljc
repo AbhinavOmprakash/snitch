@@ -9,7 +9,7 @@
   #?(:cljs
      (:require-macros
       [snitch.core]
-      [snitch.core-test :refer [let-to-fn] ])))
+      [snitch.core-test :refer [let-to-fn]])))
 
 
 (deftest test-behaviour-of-defn*
@@ -39,6 +39,14 @@
       (is (= expected-y foo1-y6))
       (is (= expected-z foo1-z7))
       (is (= expected-output foo1<))))
+
+  (testing "funtion with docstrings"
+    (let [_ (defn* foo13
+              "this be a docstring"
+              [a]
+              (if-let [x a] x "a"))
+          _ (foo13 1)]
+      (is (= 1 x))))
 
   (testing "funtion with let-like binding forms"
     (let [_ (defn* foo13 [a]
@@ -276,14 +284,14 @@
 
 
 
-     (defmacro let-to-fn [bindings & body]
-    (->> (partition 2 bindings)
-         reverse
-         (reduce (fn [acc [binding-sym val]]
-                   (if (= acc body)
-                     `((fn [~binding-sym] ~@acc) ~val)
-                     `((fn [~binding-sym] ~acc) ~val)))
-                 body))) 
+(defmacro let-to-fn [bindings & body]
+  (->> (partition 2 bindings)
+       reverse
+       (reduce (fn [acc [binding-sym val]]
+                 (if (= acc body)
+                   `((fn [~binding-sym] ~@acc) ~val)
+                   `((fn [~binding-sym] ~acc) ~val)))
+               body)))
 
 (deftest custom-let-macros
   (let [_ (defn* fn-with-custom-let-macro [x]

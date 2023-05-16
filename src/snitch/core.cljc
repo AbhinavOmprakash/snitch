@@ -416,14 +416,13 @@
                          forms)]
     result))
 
-(defmacro *fn
-  "Like the fn macro but injects inline defs for the arguments 
+(declare *fn)
+
+(defmacro defn*
+  "Like the defn macro but injects inline defs for the arguments 
    and any let bindings, or lambdas inside it."
-  [& forms]
-  (let [[name forms] (if (symbol? (first forms))
-                       [(first forms) (rest forms)]
-                       ['this forms])
-        [doc-string? forms] (if (string? (first forms))
+  [name & forms]
+  (let [[doc-string? forms] (if (string? (first forms))
                               [(first forms) (rest forms)]
                               [nil forms])
         [attr-map? forms] (if (map? (first forms))
@@ -464,23 +463,26 @@
         ; its just used to distinguish it from args-to-defn
         args-to-defn* (remove nil? args-to-defn)]
     (if (some? variadic-defs)
-      `(~'fn ~name ~@args-to-defn*
-             ~@variadic-defs*)
+      `(~'defn ~name ~@args-to-defn*
+               ~@variadic-defs*)
 
-      `(~'fn ~name ~@args-to-defn*
-             ~@params-def
-             (~'let [result#
-                     (~'do ~@body***)]
-                    (~'def ~(concat-symbols name '<) result#)
-                    result#)))))
+      `(~'defn ~name ~@args-to-defn*
+               ~@params-def
+               (~'let [result#
+                       (~'do ~@body***)]
+                      (~'def ~(concat-symbols name '<) result#)
+                      result#)))))
 
 
 
-(defmacro defn*
-  "like defn but injects inline defs for arguments and any let bindings, or lambdas inside it."
-  [name & forms]
-  (let [exp (macroexpand* &env `(*fn ~@(cons name forms)))]
-    (cons 'defn (rest exp))))
+(defmacro *fn
+  "like fn but injects inline defs for arguments and any let bindings, or lambdas inside it."
+  [& forms]
+  (let [[name forms] (if (symbol? (first forms))
+                       [(first forms) (rest forms)]
+                       ['this forms])
+        exp (macroexpand-1 `(defn* ~@(cons name forms)))]
+    (cons 'fn (rest exp))))
 
 
 (defmacro defmethod*
@@ -528,3 +530,5 @@
               (intern 'cljs.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
               (intern 'cljs.core (with-meta '*let (meta #'*let)) #'*let)
               (catch Exception _))))
+
+
