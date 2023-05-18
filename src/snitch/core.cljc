@@ -455,6 +455,7 @@
                   (->> body**
                        (macroexpand-all &env)
                        replace-fn-with-*fn
+                       (macroexpand-all &env)
                        (define-let-bindings)))
         variadic-defs* (map #(define-in-variadic-forms name %) variadic-defs)
 
@@ -499,7 +500,8 @@
                  :else (list forms))
         forms** (->>  forms*
                       (macroexpand-all &env)
-                      replace-fn-with-*fn)
+                      replace-fn-with-*fn
+                      (macroexpand-all &env))
         method-name (when (symbol? head) (first forms))]
     (if method-name
       `(defmethod ~name ~dispatch-value ~method-name
@@ -516,6 +518,7 @@
        (cons 'let)
        (macroexpand-all &env)
        replace-fn-with-*fn
+       (macroexpand-all &env)
        (define-let-bindings)))
 
 
@@ -530,5 +533,6 @@
               (intern 'cljs.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
               (intern 'cljs.core (with-meta '*let (meta #'*let)) #'*let)
               (catch Exception _))))
+
 
 
