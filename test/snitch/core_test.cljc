@@ -1,6 +1,7 @@
 (ns snitch.core-test
   #?(:clj
      (:require
+      [snitch.test-utils :refer [contains-no-duplicate-inline-defs?]]
       [clojure.test :refer [deftest is testing]]
       [snitch.core :refer [concat-symbols define-args defn* define-let-bindings defmethod* *let *fn]])
      :cljs
@@ -9,6 +10,7 @@
   #?(:cljs
      (:require-macros
       [snitch.core]
+      [snitch.test-utils :refer [contains-no-duplicate-inline-defs?]]
       [snitch.core-test :refer [let-to-fn]])))
 
 
@@ -301,6 +303,33 @@
         _ (fn-with-custom-let-macro 10)]
     (is (= y 10))
     (is (= z 11))))
+
+
+;; commenting out because this fails
+#_(deftest nested-lambda-functions-with-let-bindings-dont-have-duplicated-inline-defs
+  (is (contains-no-duplicate-inline-defs? (defn* foo []
+                                            (let [x 1]
+                                              #_((fn [y]
+                                                 (let [b 1]
+                                                   ((fn [c]
+                                                      b) 4))
+                                                 y) 4)))))
+  (is (true? (contains-no-duplicate-inline-defs? (defn* foo []
+                                                   (let [x 1]
+                                                     ((fn [y]
+                                                        (let [b 1]
+                                                          ((fn [c]
+                                                             (let [x 1]
+                                                               ((fn [y]
+                                                                  (let [b 1]
+                                                                    ((fn [c]
+                                                                       b) 4))
+                                                                  y) 4))
+                                                             b) 4))
+                                                        y) 4)))))))
+
+
+
 (comment
   (macroexpand-1 '(let-to-fn [a 1 b 2]
                              (+ a b))))

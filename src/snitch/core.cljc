@@ -2,11 +2,37 @@
   (:refer-clojure :exclude [#?(:cljs macroexpand)])
   (:require
    [cljs.analyzer :as ana]
-   [clojure.string :as s]
-   [clojure.walk :refer [prewalk]])
+   [clojure.string :as s])
   #?(:cljs
      (:require-macros
       [snitch.core])))
+
+(defn walk
+  "Like `clojure.walk/walk`, but preserves metadata."
+  [inner outer form]
+  (let [x (cond
+            (list? form) (outer (with-meta (apply list (map inner form))
+                                  (meta form)))
+            (instance? clojure.lang.IMapEntry form) (outer (vec (map inner form)))
+            (seq? form) (outer (with-meta  (doall (map inner form))
+                                 (meta form)))
+            (instance? clojure.lang.IRecord form)
+            (outer (reduce (fn [r x] (conj r (inner x))) form form))
+            (coll? form) (outer (into (empty form) (map inner form)))
+            :else (outer form))]
+    (if (instance? clojure.lang.IObj x)
+      (with-meta x (merge (meta form) (meta x)))
+      x)))
+
+(defn postwalk
+  "Like `clojure.walk/postwalk`, but preserves metadata."
+  [f form]
+  (walk (partial postwalk f) f form))
+
+(defn prewalk
+  "Like `clojure.walk/prewalk`, but preserves metadata."
+  [f form]
+  (walk (partial prewalk f) identity (f form)))
 
 
 (defn ->simple-symbol
@@ -51,12 +77,12 @@
           (if (contains? env :js-globals)
       ;; cljs
             (loop [form form
-                   form* (ana/macroexpand-1 env form)]
+                   form* (with-meta (ana/macroexpand-1 env form) (meta form))]
               (if-not (identical? form form*)
                 (recur form* (ana/macroexpand-1 env form*))
                 form*))
       ;; clj
-            (macroexpand form))))
+            (with-meta (macroexpand form) (meta form)))))
 
 
 #?(:clj (defn macroexpand-all
@@ -201,7 +227,6 @@
   (boolean (or (re-matches #".*__\d.*__auto__" (str x))
                (re-matches #".*__\d*" (str x)))))
 
-
 (defn insert-into-let
   ([bindings]
    (reduce (fn [acc [var* value]]
@@ -217,18 +242,31 @@
            []
            (partition 2 bindings))))
 
-
+(defn defined-let-binding? [form]
+  (true? (:snitch.core/defined-let-binding (meta form))))
 
 
 (defn define-let-bindings
+  "injects inline defs inside let bindings, and adds metadata indicating 
+  that the form contains inline defs.
+  This is to prevent let forms from repeatedly being passed to `insert-into-let`.
+  "
   ([body]
    (cond
      (not (seq? body)) body
+
+     (and (let-form? body)
+          (defined-let-binding? body)) body
+
      (let-form? body)
      (let [[l* bindings & inner-body] body
            inner-body* (define-let-bindings inner-body)]
-       `(~l* ~(insert-into-let (cc-destructure bindings))
-             ~@inner-body*))
+       (with-meta `(~l* ~(insert-into-let (cc-destructure bindings))
+                        ~@inner-body*)
+
+         (merge {:snitch.core/defined-let-binding true}
+                (meta body))))
+
      :else
      (map define-let-bindings body))))
 
@@ -422,6 +460,7 @@
   "Like the defn macro but injects inline defs for the arguments 
    and any let bindings, or lambdas inside it."
   [name & forms]
+
   (let [[doc-string? forms] (if (string? (first forms))
                               [(first forms) (rest forms)]
                               [nil forms])
@@ -455,7 +494,6 @@
                   (->> body**
                        (macroexpand-all &env)
                        replace-fn-with-*fn
-                       (macroexpand-all &env)
                        (define-let-bindings)))
         variadic-defs* (map #(define-in-variadic-forms name %) variadic-defs)
 
@@ -500,8 +538,7 @@
                  :else (list forms))
         forms** (->>  forms*
                       (macroexpand-all &env)
-                      replace-fn-with-*fn
-                      (macroexpand-all &env))
+                      replace-fn-with-*fn)
         method-name (when (symbol? head) (first forms))]
     (if method-name
       `(defmethod ~name ~dispatch-value ~method-name
@@ -518,9 +555,7 @@
        (cons 'let)
        (macroexpand-all &env)
        replace-fn-with-*fn
-       (macroexpand-all &env)
        (define-let-bindings)))
-
 
 
 #?(:clj (do (intern 'clojure.core (with-meta 'defn* (meta #'defn*)) #'defn*)

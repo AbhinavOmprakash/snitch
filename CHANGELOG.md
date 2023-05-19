@@ -3,8 +3,9 @@ All notable changes to this project will be documented in this file. This change
 
 ## Current
 ### Added 
-- Recursively inject inline defs inside lambda  functions.
+- Recursively inject inline defs inside lambda functions.
 - Insert inline defs inside lambda functions contained in methods and other functions
+- Preserve metadata .
 
 ## [0.1.13] 2022-12-18
 ### Added
