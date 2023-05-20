@@ -256,8 +256,12 @@
                 [a b c])]
     (is (= 1 a))
     (is (= 2 b))
-    (is (= 3 c))))
+    (is (= 3 c)))
 
+  (let [_ (*let [some-thing (or (get-in {:a {:b 1}} [:a :b])
+                                (and true
+                                     :c))])]
+    (is (= some-thing 1))))
 
 ;; TODO: add more comprehensive tests
 (deftest test-*fn
@@ -307,26 +311,26 @@
 
 ;; commenting out because this fails
 #_(deftest nested-lambda-functions-with-let-bindings-dont-have-duplicated-inline-defs
-  (is (contains-no-duplicate-inline-defs? (defn* foo []
-                                            (let [x 1]
-                                              #_((fn [y]
-                                                 (let [b 1]
-                                                   ((fn [c]
-                                                      b) 4))
-                                                 y) 4)))))
-  (is (true? (contains-no-duplicate-inline-defs? (defn* foo []
-                                                   (let [x 1]
-                                                     ((fn [y]
-                                                        (let [b 1]
-                                                          ((fn [c]
-                                                             (let [x 1]
-                                                               ((fn [y]
-                                                                  (let [b 1]
-                                                                    ((fn [c]
-                                                                       b) 4))
-                                                                  y) 4))
-                                                             b) 4))
-                                                        y) 4)))))))
+    (is (contains-no-duplicate-inline-defs? (defn* foo []
+                                              (let [x 1]
+                                                #_((fn [y]
+                                                     (let [b 1]
+                                                       ((fn [c]
+                                                          b) 4))
+                                                     y) 4)))))
+    (is (true? (contains-no-duplicate-inline-defs? (defn* foo []
+                                                     (let [x 1]
+                                                       ((fn [y]
+                                                          (let [b 1]
+                                                            ((fn [c]
+                                                               (let [x 1]
+                                                                 ((fn [y]
+                                                                    (let [b 1]
+                                                                      ((fn [c]
+                                                                         b) 4))
+                                                                    y) 4))
+                                                               b) 4))
+                                                          y) 4)))))))
 
 
 

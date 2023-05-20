@@ -14,7 +14,7 @@
             (list? form) (outer (with-meta (apply list (map inner form))
                                   (meta form)))
             (instance? clojure.lang.IMapEntry form) (outer (vec (map inner form)))
-            (seq? form) (outer (with-meta  (doall (map inner form))
+            (seq? form) (outer (with-meta (doall (map inner form))
                                  (meta form)))
             (instance? clojure.lang.IRecord form)
             (outer (reduce (fn [r x] (conj r (inner x))) form form))
@@ -70,6 +70,12 @@
             'let*
             'clojure.core/let]))))
 
+(defn with-meta*
+  "Like with-meta, but doesn't throw an exception if `x` is not an object."
+  [x m]
+  (if (instance? clojure.lang.IObj x)
+    (with-meta x m)
+    x))
 
 #?(:clj (defn macroexpand*
           "Like macroexpand but works with cljs."
@@ -77,12 +83,14 @@
           (if (contains? env :js-globals)
       ;; cljs
             (loop [form form
-                   form* (with-meta (ana/macroexpand-1 env form) (meta form))]
+                   form* (with-meta* (ana/macroexpand-1 env form)
+                           (meta form))]
               (if-not (identical? form form*)
                 (recur form* (ana/macroexpand-1 env form*))
                 form*))
       ;; clj
-            (with-meta (macroexpand form) (meta form)))))
+            (with-meta* (macroexpand form)
+              (meta form)))))
 
 
 #?(:clj (defn macroexpand-all
@@ -261,11 +269,12 @@
      (let-form? body)
      (let [[l* bindings & inner-body] body
            inner-body* (define-let-bindings inner-body)]
-       (with-meta `(~l* ~(insert-into-let (cc-destructure bindings))
-                        ~@inner-body*)
+       (with-meta* `(~l* ~(insert-into-let (cc-destructure bindings))
+                         ~@inner-body*)
 
          (merge {:snitch.core/defined-let-binding true}
-                (meta body))))
+                (when (when (instance? clojure.lang.IObj body)
+                        (meta body)) (meta body)))))
 
      :else
      (map define-let-bindings body))))
@@ -551,11 +560,12 @@
   "like let but injects inline defs for bindings and any let forms, or lambdas inside it."
   [bindings & body]
   (->> body
+       (macroexpand-all &env)
        (cons bindings)
        (cons 'let)
-       (macroexpand-all &env)
        replace-fn-with-*fn
        (define-let-bindings)))
+
 
 
 #?(:clj (do (intern 'clojure.core (with-meta 'defn* (meta #'defn*)) #'defn*)
