@@ -27,15 +27,22 @@ I recommend adding snitch to your `~/.lein/profiles.clj`.
 An example file would be
 ```clojure
 ; profiles.clj
-{:user {:dependencies [[org.clojars.abhinav/snitch "0.0.12"]]}}
+{:user {:dependencies [[org.clojars.abhinav/snitch "0.1.15"]]}}
 
-{:dev {:dependencies [[org.clojars.abhinav/snitch "0.0.12"]]}}
+{:dev {:dependencies [[org.clojars.abhinav/snitch "0.1.15"]]}}
 ```
 If you add it to your project's dev dependencies, you could add this line to your dev/user.clj
 ```
 (require '[snitch.core :refer [defn* defmethod* *fn *let]])
 ```
 requiring these macros once, will intern these macros inside clojure.core & cljs.core, so you don't have to import them in every namespace.
+
+### Exclude clojurescript dependency in clojure only projects 
+If you are using snitch exclusively for your clojure project, you can exclude the clojurescript dependency from snitch (version 0.0.15 onwards). 
+
+```clojure
+{:user {:dependencies [[org.clojars.abhinav/snitch "0.1.15" :exclusions [org.clojure/clojurescript]]]}}
+```
 
 ## Overview
 There are four macros `defn*`, `defmethod*` `*fn`, `*let`.
@@ -191,7 +198,7 @@ you can add the dependency to `~/.shadow-cljs/config.edn`
 
 ```clojure
 {:dependencies 
- [[org.clojars.abhinav/snitch "0.0.12"]]}
+ [[org.clojars.abhinav/snitch "0.1.15"]]}
 ```
 The import for clojurescript looks different. 
 

@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file. This change
 
 ## Current
 
+## [0.1.15] 2024-02-16
+### FIXED 
+- Allow users to exclude clojurescript dependency from snitch.
+
 ## [0.1.14] 2023-06-05
 ### Added 
 - Recursively inject inline defs inside lambda functions.
