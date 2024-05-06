@@ -1,18 +1,11 @@
 (ns snitch.core
   (:refer-clojure :exclude [#?(:cljs macroexpand)])
   (:require
-    [clojure.string :as s])
+    [clojure.string :as s]
+    [snitch.analyzer :as ana])
   #?(:cljs
      (:require-macros
        [snitch.core])))
-
-
-;; cljs deps can be excluded in a clojure only 
-;; project so the deps won't be available 
-(try
-  (require '[cljs.analyzer :as ana])
-  (catch Exception _
-    (require '[snitch.mock-analyzer :as ana])))
 
 
 (defn walk
