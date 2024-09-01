@@ -38,10 +38,12 @@ If you add it to your project's dev dependencies, you could add this line to you
 requiring these macros once, will intern these macros inside clojure.core & cljs.core, so you don't have to import them in every namespace.
 
 ### Exclude clojurescript dependency in clojure only projects 
+*WARNING: use snitch version 0.1.14 for clojurescript*
+
 If you are using snitch exclusively for your clojure project, you can exclude the clojurescript dependency from snitch (version 0.0.15 onwards). 
 
 ```clojure
-{:user {:dependencies [[org.clojars.abhinav/snitch "0.1.15" :exclusions [org.clojure/clojurescript]]]}}
+{:user {:dependencies [[org.clojars.abhinav/snitch "0.1.14" :exclusions [org.clojure/clojurescript]]]}}
 ```
 
 ## Overview
