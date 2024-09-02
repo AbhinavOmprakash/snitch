@@ -1,17 +1,17 @@
 (ns snitch.core-test
   #?(:clj
      (:require
-      [snitch.test-utils :refer [contains-no-duplicate-inline-defs?]]
-      [clojure.test :refer [deftest is testing]]
-      [snitch.core :refer [concat-symbols define-args defn* define-let-bindings defmethod* *let *fn]])
+       [clojure.test :refer [deftest is testing]]
+       [snitch.core :refer [concat-symbols define-args defn* define-let-bindings defmethod* *let *fn]]
+       [snitch.test-utils :refer [contains-no-duplicate-inline-defs?]])
      :cljs
      (:require
-      [cljs.test :refer [deftest is testing run-tests]]))
+       [cljs.test :refer [deftest is testing run-tests]]))
   #?(:cljs
      (:require-macros
-      [snitch.core]
-      [snitch.test-utils :refer [contains-no-duplicate-inline-defs?]]
-      [snitch.core-test :refer [let-to-fn]])))
+       [snitch.core]
+       [snitch.core-test :refer [let-to-fn]]
+       [snitch.test-utils :refer [contains-no-duplicate-inline-defs?]])))
 
 
 (deftest test-behaviour-of-defn*
@@ -31,8 +31,8 @@
           expected-z 7
           expected-m {:a/foo1-b1 1 :foo1-c2 2 :d 3}
           expected-output [1 2 3 {:a/foo1-b1 1 :foo1-c2 2 :d 3} 5 6 7]]
- ;;     b1, c2 etc are globally defined by the macro
-  ;;    defn*
+      ;;     b1, c2 etc are globally defined by the macro
+      ;;    defn*
       (is (= expected-b foo1-b1))
       (is (= expected-c foo1-c2))
       (is (= expected-d foo1-dee3))
@@ -161,7 +161,35 @@
       (is (= expected-foo6> foo6>)
           "reconstructing a function with variadic args")))
 
+  (testing "prep-post map identification works correctly for variadic args"
+    ;; This exists because define-in-variadic-forms
+    ;; treated any map in the body as a prepost-map? 
+    ;; instead of checking whether there was a body or not
+    (let [_ (defn* foo7
+              ([a] {:a a})
+              ([b c] {:b b
+                      :c c}))
+          _ (foo7 1)
+          _ (foo7 2 3)]
+      (is (= 1 a))
+      (is (= 2 b))
+      (is (= 3 c)))
 
+    ;; if fn retruns a map with pre in it
+    ;; don't consider it a prepost-map?
+    ;; because a fn can't have a prep-post map with no body
+    (let [_ (defn* foo8 ([a]
+                         {:pre [1 2 3]}))]
+      (is (= (foo8 1) {:pre [1 2 3]})))
+
+    (let [_ (defn* foo9 ([b]
+                         {:pre [(even? b)]}
+                         b))]
+      ;; AssertionError is thrown when 
+      ;; prep-post maps are correctly recognised 
+      ;; because 1 is odd
+      (is (thrown? AssertionError (foo9 1)))
+      (is (= 2 (foo9 2)))))
 
   ;;   FIXME commenting out the history feature because it doesn't work in cljs yet.
   #_(testing "defn* stores history of the values.
@@ -250,6 +278,7 @@
     (is (= {:d11 :foomethod} b11))
     (is (= :foomethod d11))))
 
+
 (deftest test-*let
   (let [_ (*let [a 1
                  [b c] [2 3]]
@@ -262,6 +291,7 @@
                                 (and true
                                      :c))])]
     (is (= some-thing 1))))
+
 
 ;; TODO: add more comprehensive tests
 (deftest test-*fn
@@ -279,7 +309,8 @@
     (is (= x 1))
     (is (= y 2)))
   (let [_ ((*fn [a b]
-                ((fn ([x] x)
+                ((fn
+                   ([x] x)
                    ([x y] [x y])) a b))
            1 2)]
     (is (= a 1))
@@ -288,9 +319,8 @@
     (is (= y 2))))
 
 
-
-
-(defmacro let-to-fn [bindings & body]
+(defmacro let-to-fn
+  [bindings & body]
   (->> (partition 2 bindings)
        reverse
        (reduce (fn [acc [binding-sym val]]
@@ -298,6 +328,7 @@
                    `((fn [~binding-sym] ~@acc) ~val)
                    `((fn [~binding-sym] ~acc) ~val)))
                body)))
+
 
 (deftest custom-let-macros
   (let [_ (defn* fn-with-custom-let-macro [x]
@@ -333,14 +364,9 @@
                                                           y) 4)))))))
 
 
-
 (comment
   (macroexpand-1 '(let-to-fn [a 1 b 2]
                              (+ a b))))
-
-
-
-
 
 
 (comment
@@ -380,6 +406,3 @@
 
   (filter #(clojure.string/starts-with? (str %) "foo3") (keys (ns-publics 'snitch.core-test)))
   (map #(ns-unmap 'snitch.core-test %) (keys (ns-publics 'snitch.core-test))))
-
-
-
