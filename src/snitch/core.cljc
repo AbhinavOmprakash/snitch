@@ -478,12 +478,12 @@
 (defn replace-fn-with-*fn
   "Replaces all occurences of `fn` with `*fn`"
   [forms]
-  (let [result  (prewalk (fn [form]
-                           (if (fn-form? form)
-                             `(*fn ~@(rest form))
+  (let [result (prewalk (fn [form]
+                          (if (fn-form? form)
+                            `(*fn ~@(rest form))
 
-                             form))
-                         forms)]
+                            form))
+                        forms)]
     result))
 
 
