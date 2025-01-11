@@ -163,7 +163,7 @@
 
   (testing "prep-post map identification works correctly for variadic args"
     ;; This exists because define-in-variadic-forms
-    ;; treated any map in the body as a prepost-map? 
+    ;; treated any map in the body as a prepost-map?
     ;; instead of checking whether there was a body or not
     (let [_ (defn* foo7
               ([a] {:a a})
@@ -185,11 +185,12 @@
     (let [_ (defn* foo9 ([b]
                          {:pre [(even? b)]}
                          b))]
-      ;; AssertionError is thrown when 
-      ;; prep-post maps are correctly recognised 
+      ;; AssertionError is thrown when
+      ;; prep-post maps are correctly recognised
       ;; because 1 is odd
-      (is (thrown? AssertionError (foo9 1)))
-      (is (= 2 (foo9 2)))))
+      #?(:clj (is (thrown? AssertionError (foo9 1)))
+         :cljs (is (thrown? js/Error (foo9 1))))
+      (is (= 2 (foo9 2))))))
 
   ;;   FIXME commenting out the history feature because it doesn't work in cljs yet.
   #_(testing "defn* stores history of the values.

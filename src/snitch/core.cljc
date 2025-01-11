@@ -1,8 +1,8 @@
 (ns snitch.core
   (:refer-clojure :exclude [#?(:cljs macroexpand)])
   (:require
-    [clojure.string :as s]
-    [snitch.analyzer :as ana])
+    [cljs.analyzer :as ana]
+    [clojure.string :as s])
   #?(:cljs
      (:require-macros
        [snitch.core])))
@@ -116,7 +116,7 @@
 
 
 (defn cc-destructure
-  "A slightly modified version of clj and cljs' destructure to 
+  "A slightly modified version of clj and cljs' destructure to
   work with clj and cljs."
   [bindings]
   (let [bents (partition 2 bindings)
@@ -244,8 +244,8 @@
 (defn insert-into-let
   ([bindings]
    (reduce (fn [acc [var* value]]
-             ;; if the var is introduced by 
-             ;; clojure's destructuring it makes 
+             ;; if the var is introduced by
+             ;; clojure's destructuring it makes
              ;; no sense to globally define it, since no one
              ;; will know about it, and its wasteful.
              (if (autogensym? var*)
@@ -263,7 +263,7 @@
 
 
 (defn define-let-bindings
-  "injects inline defs inside let bindings, and adds metadata indicating 
+  "injects inline defs inside let bindings, and adds metadata indicating
   that the form contains inline defs.
   This is to prevent let forms from repeatedly being passed to `insert-into-let`.
   "
@@ -312,11 +312,11 @@
 (defn namespaced-destructuring
   "namespaced maps can be destructured in two ways.
   [{:keys [a/b]}] #:a{:b 1}
-  or 
+  or
   [{:a/keys [b]}] #:a{:b 1}
 
-  This function handles the 2nd case. 
-  Converts the 2nd case to the first case 
+  This function handles the 2nd case.
+  Converts the 2nd case to the first case
   "
   [k v]
   (let [v* (mapv (fn [sym]
@@ -327,9 +327,9 @@
 
 (def preserve-symbol?
   "Certain values will get printed in a way that's not readable.
-  for e.g functions when evaluated return function Objects 
-  like this - 
-  identity 
+  for e.g functions when evaluated return function Objects
+  like this -
+  identity
   ;=> #function[clojure.core/identity]
   These can't be evaluated, so we preserve the symbol as it is.
   "
@@ -406,7 +406,7 @@
   ;; There is some hairy quoting going on here so let me explain
   ;; let's say we have a function (defn* foo [x] x)
   ;; and I call it (foo 1)
-  ;; what I want from `replay-function` is to define a 
+  ;; what I want from `replay-function` is to define a
   ;; var such that when I evaluate it, it returns me a list (foo 1)
   ;; that I can evaluate.
   ;; notice that here foo is a symbol but 1 is the value of the symbol x
@@ -437,7 +437,7 @@
        (or (vector? (:pre (first forms)))
            (vector? (:post (first forms))))
        ;; test for (rest form)
-       ;; because the map shouldn't be treated 
+       ;; because the map shouldn't be treated
        ;; as a prep-post map IFF there is no body
        ;; since a fn can't exist without a body
        (seq (rest forms))))
@@ -491,7 +491,7 @@
 
 
 (defmacro defn*
-  "Like the defn macro but injects inline defs for the arguments 
+  "Like the defn macro but injects inline defs for the arguments
    and any let bindings, or lambdas inside it."
   [name & forms]
 
@@ -598,3 +598,4 @@
               (intern 'cljs.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
               (intern 'cljs.core (with-meta '*let (meta #'*let)) #'*let)
               (catch Exception _))))
+
