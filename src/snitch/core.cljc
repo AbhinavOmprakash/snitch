@@ -430,10 +430,23 @@
     (cons (replay-function name params) body)))
 
 
+(defn- prepost-map?
+  [forms]
+  ;; returns true for something like this {:pre [#(even? %)]}
+  (and (map? (first forms))
+       (or (vector? (:pre (first forms)))
+           (vector? (:post (first forms))))
+       ;; test for (rest form)
+       ;; because the map shouldn't be treated 
+       ;; as a prep-post map IFF there is no body
+       ;; since a fn can't exist without a body
+       (seq (rest forms))))
+
+
 (defn define-in-variadic-forms
   ([name form]
    (let [params (first form)
-         prepost-map? (when (map? (second form))
+         prepost-map? (when (prepost-map? (rest form))
                         (second form))
          body (if (nil? prepost-map?)
                 (rest form)
@@ -442,8 +455,8 @@
          body** (insert-replay-function name params body*)
          params-def (define-args params*)]
      (if (some? prepost-map?)
-       `(~params* ~@params-def
-                  ~prepost-map?
+       `(~params* ~prepost-map?
+                  ~@params-def
                   (~'let [result# (~'do ~@(define-let-bindings body**))]
                          (~'def ~(concat-symbols name '<) result#)
                          result#))
@@ -465,12 +478,12 @@
 (defn replace-fn-with-*fn
   "Replaces all occurences of `fn` with `*fn`"
   [forms]
-  (let [result  (prewalk (fn [form]
-                           (if (fn-form? form)
-                             `(*fn ~@(rest form))
+  (let [result (prewalk (fn [form]
+                          (if (fn-form? form)
+                            `(*fn ~@(rest form))
 
-                             form))
-                         forms)]
+                            form))
+                        forms)]
     result))
 
 
@@ -492,10 +505,7 @@
                           [(first forms) (rest forms)]
                           [nil forms])
         [prepost-map? forms] (if (and (some? params*)
-                                      (map? (first forms))
-                                      (or
-                                        (vector? (:pre (first forms)))
-                                        (vector? (:post (first forms)))))
+                                      (prepost-map? forms))
                                [(first forms) (rest forms)]
                                [nil forms])
         [variadic-defs forms] (if (and (nil? params*)
