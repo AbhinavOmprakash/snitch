@@ -190,7 +190,15 @@
       ;; because 1 is odd
       #?(:clj (is (thrown? AssertionError (foo9 1)))
          :cljs (is (thrown? js/Error (foo9 1))))
-      (is (= 2 (foo9 2))))))
+      (is (= 2 (foo9 2)))))
+
+  (testing "If there is a let binding on the right side of the
+           let binding, then inline defs should be injected there as well"
+    (let [_ (defn* foo [x]
+              (let [a (let [b (inc x)] b)]
+                a))
+          _ (foo 1)]
+      (is (= b 2)))))
 
 
 ;; FIXME: rename vars to follow convention.

@@ -276,8 +276,11 @@
 
      (let-form? body)
      (let [[l* bindings & inner-body] body
-           inner-body* (define-let-bindings inner-body)]
-       (with-meta* `(~l* ~(insert-into-let (cc-destructure bindings))
+           inner-body* (define-let-bindings inner-body)
+           bindings' (mapv define-let-bindings bindings) ; the right side of a let binding can sometimes also contain let forms
+           ]
+       (prn bindings)
+       (with-meta* `(~l* ~(insert-into-let (cc-destructure bindings'))
                          ~@inner-body*)
 
          (merge {:snitch.core/defined-let-binding true}
@@ -286,6 +289,8 @@
 
      :else
      (map define-let-bindings body))))
+
+
 
 
 (defn maybe-destructured
@@ -598,4 +603,3 @@
               (intern 'cljs.core (with-meta 'defmethod* (meta #'defmethod*)) #'defmethod*)
               (intern 'cljs.core (with-meta '*let (meta #'*let)) #'*let)
               (catch Exception _))))
-
