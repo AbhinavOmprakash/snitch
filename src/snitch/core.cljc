@@ -279,7 +279,6 @@
            inner-body* (define-let-bindings inner-body)
            bindings' (mapv define-let-bindings bindings) ; the right side of a let binding can sometimes also contain let forms
            ]
-       (prn bindings)
        (with-meta* `(~l* ~(insert-into-let (cc-destructure bindings'))
                          ~@inner-body*)
 
