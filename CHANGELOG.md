@@ -2,13 +2,18 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## Current
+## [0.1.16] 2025-04-5
+### FIXED
+- There was an issue with excluding clojurescript as a dependency, alas it isn't possible to do so and I haven't found a
+    way around it either.
+- Fixed issue with lambda functions described here https://github.com/AbhinavOmprakash/snitch/issues/38
 
 ## [0.1.15] 2024-02-16
-### FIXED 
+### FIXED
 - Allow users to exclude clojurescript dependency from snitch.
 
 ## [0.1.14] 2023-06-05
-### Added 
+### Added
 - Recursively inject inline defs inside lambda functions.
 - Insert inline defs inside lambda functions contained in methods and other functions
 - Preserve metadata .
@@ -22,11 +27,11 @@ All notable changes to this project will be documented in this file. This change
 - Support variadic arg functions when reconstructing function calls.
 - When reconstructing a function call, don't evaluate the function, because it results in a "function object" that can't be read back. Preserves the symbol instead.
 
-## [0.0.12] - 2022-08-20 
+## [0.0.12] - 2022-08-20
 ### Fixed
 - fix reconstruction of nested maps
 
-## [0.0.11] - 2022-08-20 
+## [0.0.11] - 2022-08-20
 ### Fixed
 - fix handling of funtions with keyword arguments.
 - fix defmethod* .
@@ -35,12 +40,12 @@ All notable changes to this project will be documented in this file. This change
 
 
 ## [0.0.10] - 2022-07-21
-- fix handling of `:or` in funtion definiton 
+- fix handling of `:or` in funtion definiton
 
 ## [0.0.9] - 2022-07-15
 ### Added
 - add ability to reconstruct a function call.
-### Fixed 
+### Fixed
 - fix destructuring issues in cljs
 ### Changed
 - Change license to EPL-2.0
@@ -50,7 +55,7 @@ All notable changes to this project will be documented in this file. This change
 - snitch is now cljc, and works with clojurescript as well.
 
 ### Fixed
-- Fixed destructuring 
+- Fixed destructuring
 
 ### Changed
 - The var name for getting the result of the function.
