@@ -4,26 +4,31 @@
 
 > Snitch is inline-defs on steroids
 
+Or:
 
-Snitch is how I debug and understand data flowing through my system.
-It's not a replacement for a full-fledged debugger, but it's pretty close and will be useful in 90% of the cases. 
-I use it as my sole debugger (in rare cases I reach for print statements). 
+> Highly enhanced ergonomics for repl-driven development.
 
-# Features 
-- Support for Clojurescript. 
+Snitch is how I debug and understand data flowing through my system. I use it as my sole debugger (in rare cases I reach for print statements).
+
+It's not a replacement for a full-fledged debugger, but it's pretty close and will be useful in 90% of the cases. However, unlike a debugger Snitch runs while your application us running, which is both better and worse than a traditional debugger. Better because a debugger freezes your application while you inspect the state. Worse because Snitch will only show you the latest value from a series of invocation, where a debugger will let you step to the invocation you are interested in.
+
+# Features
+- `defn*`, `*let`, `*fn`, and `defmethod*` macros for automatic inline `def`s for function arguments and bindings
+- Gives access to the return value of called functions
+- Lets you modify and then rerun the function with the snitched invokation arguments
+- Support for Clojurescript.
 - Editor agnostic (use it along with cider, conjure, calva, or cursive!).
-- Highly ergonomic for repl-driven development.
 
-# What people have to say ❤️ 
+# What people have to say ❤️
 > Very handy with those variants of the regular macros. Just add a `*` and you are inline def-ing the args! - Peter Strömberg (co-author of Calva)
 
 # Talk
-I gave a [talk](https://www.youtube.com/watch?v=WqilQulsJQc) about snitch at clojure Asia you can watch it 
+I gave a [talk](https://www.youtube.com/watch?v=WqilQulsJQc) about snitch at clojure Asia you can watch it
 here https://www.youtube.com/watch?v=WqilQulsJQc.
 
 # Usage
 ## Installation
-I recommend adding snitch to your `~/.lein/profiles.clj`.
+I recommend adding snitch to your `~/.lein/profiles.clj` or `deps.edn`.
 An example file would be
 ```clojure
 ; profiles.clj
@@ -31,11 +36,14 @@ An example file would be
 
 {:dev {:dependencies [[org.clojars.abhinav/snitch "0.1.16"]]}}
 ```
-If you add it to your project's dev dependencies, you could add this line to your dev/user.clj
-```
+
+Once your repl is running you can evaluate:
+
+```clojure
 (require '[snitch.core :refer [defn* defmethod* *fn *let]])
 ```
-requiring these macros once, will intern these macros inside clojure.core & cljs.core, so you don't have to import them in every namespace.
+
+in the Clojure REPL and the macros will be interned inside clojure.core & cljs.core, so you don't have to import them in every namespace. It will also make the macros available for your ClojureScript namespaces if your ClojureScript REPL is cloned/spawned off of the Clojure REPL.
 
 ## Overview
 There are four macros `defn*`, `defmethod*` `*fn`, `*let`.
@@ -44,11 +52,14 @@ They are drop-in replacements for `defn`, `defmethod`, `fn`, and `let`.
 These macros creates inline defs of the parameters passed to the functions,
 and also inside the let bindings of the functions.
 This makes it very "ergonomic" for repl-driven development.
+Calling functions defined using the `defn*`, and `*fn` macros will also define symbols that:
+1. give access to the return value of the functions. `(defn* foo [x y z] ...)` will define `foo<` which holds the return value of calling `foo`.
+2. reconstructs the function call. Defining `(defn* foo [x y z] ...)` and then calling `(foo 1 2 3)` will let you reconstruct the call by evaluating `foo>`, you can then evaluate this reconstructed list to repeat the function call. This may not seem like a big deal, but then remember that `foo` may be called indirectly from a chain of function calls, so being able to update the `foo` function and re-call it with the last arguments it was called with is quite convenient.
 
 ## defn*
 
 defn* walks your clojure form and injects inline defs for all the bindings in the form.
-This includes the arguments as well as bindings inside a let body, and any lambda function. 
+This includes the arguments as well as bindings inside a let body, and any lambda function.
 
 ```clojure
 (require '[snitch.core :refer [defn*]])
@@ -70,10 +81,10 @@ b ; 85
 
 ;; we can get the return value of foo by appending a < to foo
 
-foo< 
+foo<
 => nil
 
-;; it roughly expands to a form that looks like this. 
+;; it roughly expands to a form that looks like this.
 ;; the actual macro expansion is more complex.
 (clojure.core/defn
    foo
@@ -84,7 +95,14 @@ foo<
     [result__12589__auto__ (do (+ a b) nil)]
     (def foo< result__12589__auto__)
     result__12589__auto__))
+
+;; And you can reconstruct the call to foo:
+
+foo>
+=> (foo 15 85)
+
 ```
+
 
 A more complex example
 
@@ -97,11 +115,11 @@ A more complex example
                [x5 [y6 [z7]]]]
     [b1 c2 dee3 m4 x5 y6 z7])
 
-;; there is some crazy destructuring going on in the function parameters.    
+;; there is some crazy destructuring going on in the function parameters.
 ;; snitch handles this with ease
 
 (foo1 {:a/b1 1 :c2 2 :d3 3 :e 100 :f 200}
-      [5 [6 [7]]]) 
+      [5 [6 [7]]])
 ;=> [1 2 3 {:a/b1 1, :c2 2, :d3 3} 5 6 7]
 
 ;; we can evaluate each var.
@@ -120,20 +138,20 @@ foo1< ; [1 2 3 {:a/b1 1, :c2 2, :d3 3} 5 6 7]
 ;; we have the parameters defined, but you can't do this
 
 (foo1 b1 dee3....)
-;; because it needs to be passed a map and a vector. 
+;; because it needs to be passed a map and a vector.
 ;; constructing the map is very painful and time consuming.
 ;; snitch provides functionality for that too.
-;; just evaluate foo1> 
+;; just evaluate foo1>
 
 foo1> ; (foo1 {:a/b1 1, :c2 2, :d3 3} [5 [6 [7]]])
 
-;; foo1> returns a list that can be evaluated 
-;; notice that when snitch reconstructed the function call, 
-;; it left out the keys :e and :f? 
+;; foo1> returns a list that can be evaluated
+;; notice that when snitch reconstructed the function call,
+;; it left out the keys :e and :f?
 ;; the original map passed was {:a/b1 1 :c2 2 :d3 3 :e 100 :f 200}
 
-;; snitch is smart that way and only constructs the arguments absolutely necessary 
-;; for the function call. 
+;; snitch is smart that way and only constructs the arguments absolutely necessary
+;; for the function call.
 ```
 
 injecting inline defs inside let forms
@@ -156,7 +174,7 @@ a ; 4
 b ; 4
 ```
 
-## *let 
+## *let
 *let will recursively inject inline defs for the all binding forms including any lambda forms.
 ```clojure
 (*let [a 1]
@@ -169,7 +187,7 @@ b ; 2
 c ; 3
 ```
 
-## *fn 
+## *fn
 Similar to `defn*`, will consider the name of the lambda function as `this` if not provided.
 
 ```clojure
@@ -184,21 +202,29 @@ this< ; [:a :b]
 
 # Clojurescript support
 
-Snitch works with clojurescript as well.
-
-## shadow-cljs.edn
-you can add the dependency to `~/.shadow-cljs/config.edn`. 
-```clojure
-{:dependencies 
- [[org.clojars.abhinav/snitch "0.1.16"]]}
-```
-The import for clojurescript looks different. 
+Snitch works with clojurescript as well. As noted above, if your ClojureScript REPL is spawned/cloned off of the Clojure REPL, you can start your session by requiring the macros in the Clojure REPL, and this will make them available to ClojureScript. If you don't have easy access to the Clojure REPL, you need to include:
 
 ```clojure
-(:require [snitch.core :refer-macros [defn*]])
+(:require-macros [snitch.core :refer [defn* defmethod* *fn *let]])
 ```
+
+in the `ns` form of a namespace.
+
+(That said, usually there is some way to inject code in the Clojure REPL.)
 
 # Integrating snitch in your workflow.
+
+Using Clojure 1.12, you can avoid adding Snitch dependencies to your project and instead do it dynamically, by evaluating:
+
+```clojure
+;; Add the dependency dynamically
+(require '[clojure.repl.deps :refer [add-libs]])
+(add-libs '{org.clojars.abhinav/snitch {:mvn/version "0.1.16"}})
+;; While at it, intern the Snitch macros in clojure.core
+(require '[snitch.core :refer [defn* defmethod* *fn *let]])
+```
+
+## VIM
 
 I have two vim macros that inject `(require '[snitch.core :refer [defn* defmethod* *fn *let]])` at the top of my ns, and evaluate it.
 
@@ -222,8 +248,40 @@ the macro is specific to my config, but the steps will give you an idea to creat
 
 if you have created any specific macros/workflows for your editor of choice, you can open a PR and add it to the readme :)
 
+## Calva
 
-# License 
+Calva has several ways you can evaluate code in the Clojure REPL automatically when it has been connected. But you can also consider doing it a bit more on demand, for increased control, via a custom repl command snippet like so in your user `settings.json` file:
+
+```jsonc
+  "calva.customREPLCommandSnippets": [
+    ...
+    {
+      "name": "qol: Add Snitch dependency",
+      "repl": "clj",
+      "snippet": "(require '[clojure.repl.deps :refer [add-libs]])\n\n(add-libs '{ org.clojars.abhinav/snitch {:mvn/version \"0.1.16\"}})\n\n(require '[snitch.core :refer [defn* defmethod* *fn *let]])"
+    },
+    ...
+  ],
+```
+
+Then press `ctrl+alt+space space` to get a quick-pick menu which will have the **qol: Add Snitch dependency** option.
+
+For instrumenting a function definition to use `defn*` instead of `defn` you can define a keyboard shortcut like so:
+
+```jsonc
+  {
+    "key": "ctrl+alt+c s",
+    "when": "calva:connected",
+    "command": "calva.runCustomREPLCommand",
+    "args": {
+      "snippet": "${top-level-form|replace|^\\(defn-?|(defn*}",
+    }
+  },
+```
+
+This will evaluate the funcion using `defn*` without editing the file. NB: If you are using some hot-reload tool like shadow-cljs, saving the file will re-evaluate the function as it is written in the file. Which may or may not be what you want to happen.
+
+# License
 Parts of the code in snitch is taken from clojure.core and cljs.core.
 
 ```
