@@ -10,14 +10,14 @@ Or:
 
 Snitch is how I debug and understand data flowing through my system. I use it as my sole debugger (in rare cases I reach for print statements).
 
-It's not a replacement for a full-fledged debugger, but it's pretty close and will be useful in 90% of the cases. However, unlike a debugger Snitch runs while your application us running, which is both better and worse than a traditional debugger. Better because a debugger freezes your application while you inspect the state. Worse because Snitch will only show you the latest value from a series of invocation, where a debugger will let you step to the invocation you are interested in.
+It's not a replacement for a full-fledged debugger, but it's pretty close and will be useful in 90% of the cases. However, unlike a debugger Snitch runs while your application us running, which is both better and worse than a traditional debugger. Better because a debugger freezes your application while you inspect the state. Better because the Clojure REPL will let you modify the code you are debugging, while it is running. Most debugger do not let you do that. Worse because Snitch will only show you the latest value from a series of invocation, where a debugger will let you step to the invocation you are interested in. (BTW. There are ways to collect state from all invocations, even if Snitch doesn't help with it.)
 
 # Features
-- `defn*`, `*let`, `*fn`, and `defmethod*` macros for automatic inline `def`s for function arguments and bindings
+- `defn*`, `*let`, `*fn`, and `defmethod*` macros automating inline `def`s for function arguments and bindings
 - Gives access to the return value of called functions
 - Lets you modify and then rerun the function with the snitched invokation arguments
 - Support for Clojurescript.
-- Editor agnostic (use it along with cider, conjure, calva, or cursive!).
+- Editor agnostic (use it along with [CIDER](https://cider.mx), [Conjure](https://conjure.oli.me.uk/), [Calva](https://calva.io), [Cursive](https://cursive-ide.com/), or any REPL enhanced [Clojure editor](https://clojure.org/guides/editors!).
 
 # What people have to say ❤️
 > Very handy with those variants of the regular macros. Just add a `*` and you are inline def-ing the args! - Peter Strömberg (co-author of Calva)
@@ -31,7 +31,7 @@ here https://www.youtube.com/watch?v=WqilQulsJQc.
 I recommend adding snitch to your `~/.lein/profiles.clj` or `deps.edn`.
 An example file would be
 ```clojure
-; profiles.clj
+; Leiningen profiles.clj
 {:user {:dependencies [[org.clojars.abhinav/snitch "0.1.16"]]}}
 
 {:dev {:dependencies [[org.clojars.abhinav/snitch "0.1.16"]]}}
@@ -47,11 +47,11 @@ in the Clojure REPL and the macros will be interned inside clojure.core & cljs.c
 
 ## Overview
 There are four macros `defn*`, `defmethod*` `*fn`, `*let`.
-They are drop-in replacements for `defn`, `defmethod`, `fn`, and `let`.
+They are drop-in replacements for `defn`, `defmethod`, `fn`, and `let`, respectively.
 
-These macros creates inline defs of the parameters passed to the functions,
+These macros create inline defs of the parameters passed to the functions,
 and also inside the let bindings of the functions.
-This makes it very "ergonomic" for repl-driven development.
+This makes it very ergonomic for repl-driven development.
 Calling functions defined using the `defn*`, and `*fn` macros will also define symbols that:
 1. give access to the return value of the functions. `(defn* foo [x y z] ...)` will define `foo<` which holds the return value of calling `foo`.
 2. reconstructs the function call. Defining `(defn* foo [x y z] ...)` and then calling `(foo 1 2 3)` will let you reconstruct the call by evaluating `foo>`, you can then evaluate this reconstructed list to repeat the function call. This may not seem like a big deal, but then remember that `foo` may be called indirectly from a chain of function calls, so being able to update the `foo` function and re-call it with the last arguments it was called with is quite convenient.
@@ -264,22 +264,54 @@ Calva has several ways you can evaluate code in the Clojure REPL automatically w
   ],
 ```
 
-Then press `ctrl+alt+space space` to get a quick-pick menu which will have the **qol: Add Snitch dependency** option.
+Then press <kbd>cmd+enter</kbd> to get a quick-pick menu which will have the **qol: Add Snitch dependency** option. (If you're not on a mac, use some other key, e.g. <kbd>ctrl+alt+s</kbd> <kbd>enter</kbd>.)
 
 For instrumenting a function definition to use `defn*` instead of `defn` you can define a keyboard shortcut like so:
 
 ```jsonc
   {
-    "key": "ctrl+alt+c s",
-    "when": "calva:connected",
+    // Instrument as snitched defn*
+    "key": "cmd+enter",
+    "when": "editorLangId == 'clojure' && calva:connected",
     "command": "calva.runCustomREPLCommand",
     "args": {
-      "snippet": "${top-level-form|replace|^\\(defn-?|(defn*}",
+      "snippet": "${top-level-form|replace|^\\(defn-?|(defn*}"
     }
   },
 ```
 
-This will evaluate the funcion using `defn*` without editing the file. NB: If you are using some hot-reload tool like shadow-cljs, saving the file will re-evaluate the function as it is written in the file. Which may or may not be what you want to happen.
+This will evaluate the funcion using `defn*` without editing the file. NB: If you are using some hot-reload tool like [shadow-cljs](https://github.com/thheller/shadow-cljs), saving the file will re-evaluate the function as it is written in the file, removing the snitching. This may or may not be what you want to happen. (Control that save-reflex! 😀)
+
+You can also bind keys for checking the results of snitched functions and reconstruction the calls to snitched functions:
+
+```jsonc
+  {
+    // Check snitched defn* result
+    "key": "ctrl+alt+s r",
+    "when": "editorLangId == 'clojure' && calva:connected",
+    "command": "calva.runCustomREPLCommand",
+    "args": {
+      "snippet": "${top-level-defined-symbol|replace|$|<}"
+    }
+  },
+  {
+    // Reconstruct last call to snitched defn* to clipboard
+    "key": "ctrl+alt+s c",
+    "when": "editorLangId == 'clojure' && calva:connected",
+    "command": "runCommands",
+    "args": {
+      "commands": [
+        {
+          "command": "calva.runCustomREPLCommand",
+          "args": {
+            "snippet": "${top-level-defined-symbol|replace|$|>}"
+          }
+        },
+        "calva.copyLastResults"
+      ]
+    }
+  },
+```
 
 # License
 Parts of the code in snitch is taken from clojure.core and cljs.core.
