@@ -224,7 +224,7 @@ Using Clojure 1.12, you can avoid adding Snitch dependencies to your project and
 (require '[snitch.core :refer [defn* defmethod* *fn *let]])
 ```
 
-## VIM
+## Vim/Neovim
 
 I have two vim macros that inject `(require '[snitch.core :refer [defn* defmethod* *fn *let]])` at the top of my ns, and evaluate it.
 
