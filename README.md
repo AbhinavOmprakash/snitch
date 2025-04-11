@@ -313,6 +313,8 @@ You can also bind keys for checking the results of snitched functions and recons
   },
 ```
 
+Here's a demo of using these bindings in a shadow-cljs project: https://youtu.be/jb1BcYpyOAs
+
 # License
 Parts of the code in snitch is taken from clojure.core and cljs.core.
 
