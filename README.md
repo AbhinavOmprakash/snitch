@@ -54,7 +54,7 @@ and also inside the let bindings of the functions.
 This makes it very ergonomic for repl-driven development.
 Calling functions defined using the `defn*`, and `*fn` macros will also define symbols that:
 1. Give access to the return value of the functions. `(defn* foo [x y z] ...)` will define `foo<` which holds the return value of calling `foo`.
-2. reconstructs the function call. Defining `(defn* foo [x y z] ...)` and then calling `(foo 1 2 3)` will let you reconstruct the call by evaluating `foo>`, you can then evaluate this reconstructed list to repeat the function call. This may not seem like a big deal, but then remember that `foo` may be called indirectly from a chain of function calls, so being able to update the `foo` function and re-call it with the last arguments it was called with is quite convenient.
+2. Reconstructs the function call. Defining `(defn* foo [x y z] ...)` and then calling `(foo 1 2 3)` will let you reconstruct the call by evaluating `foo>`, you can then evaluate this reconstructed list to repeat the function call. This may not seem like a big deal, but then remember that `foo` may be called indirectly from a chain of function calls, so being able to update the `foo` function and re-call it with the last arguments it was called with is quite convenient.
 
 ## defn*
 
