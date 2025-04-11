@@ -15,7 +15,7 @@ It's not a replacement for a full-fledged debugger, but it's pretty close and wi
 # Features
 - `defn*`, `*let`, `*fn`, and `defmethod*` macros that inject inline `def`s for function arguments and let bindings.
 - Gives access to the return value of called functions
-- Lets you modify and then rerun the function with the snitched invokation arguments
+- Lets you modify and then rerun the function with the "snitched" arguments
 - Support for Clojurescript.
 - Editor agnostic (use it along with [CIDER](https://cider.mx), [Conjure](https://conjure.oli.me.uk/), [Calva](https://calva.io), [Cursive](https://cursive-ide.com/), or any REPL enhanced [Clojure editor](https://clojure.org/guides/editors!).
 
