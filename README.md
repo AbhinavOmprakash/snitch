@@ -249,7 +249,7 @@ the macro is specific to my config, but the steps will give you an idea to creat
 if you have created any specific macros/workflows for your editor of choice, you can open a PR and add it to the readme :)
 
 ## Calva
-
+Here's a [demo](https://www.youtube.com/watch?v=jb1BcYpyOAs) showing how calva and snitch work together by the author of Calva [Peter Strömberg](https://github.com/PEZ) himself :)
 Calva has several ways you can evaluate code in the Clojure REPL automatically when it has been connected. But you can also consider doing it a bit more on demand, for increased control, via a custom repl command snippet like so in your user `settings.json` file:
 
 ```jsonc
