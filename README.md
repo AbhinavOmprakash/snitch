@@ -10,7 +10,7 @@ Or:
 
 Snitch is how I debug and understand data flowing through my system. I use it as my sole debugger (in rare cases I reach for print statements).
 
-It's not a replacement for a full-fledged debugger, but it's pretty close and will be useful in 90% of the cases. However, unlike a debugger Snitch runs while your application us running, which is both better and worse than a traditional debugger. Better because a debugger freezes your application while you inspect the state. Better because the Clojure REPL will let you modify the code you are debugging, while it is running. Most debugger do not let you do that. Worse because Snitch will only show you the latest value from a series of invocation, where a debugger will let you step to the invocation you are interested in. (BTW. There are ways to collect state from all invocations, even if Snitch doesn't help with it.)
+It's not a replacement for a full-fledged debugger, but it's pretty close and will be useful in 90% of the cases. However, unlike a debugger, Snitch runs while your application is running, which is both better and worse than a traditional debugger. Better because a debugger freezes your application while you inspect the state. Better because the Clojure REPL will let you modify the code you are debugging, while it is running. Most debuggers do not let you do that. Worse because Snitch will only show you the latest value from a series of invocations, whereas a debugger will let you step to the invocation you are interested in. (BTW. There are ways to collect state from all invocations, even if Snitch doesn't help with it.)
 
 # Features
 - `defn*`, `*let`, `*fn`, and `defmethod*` macros automating inline `def`s for function arguments and bindings
