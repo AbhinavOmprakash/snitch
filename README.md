@@ -282,7 +282,7 @@ For instrumenting a function definition to use `defn*` instead of `defn` you can
 
 This will evaluate the funcion using `defn*` without editing the file. NB: If you are using some hot-reload tool like [shadow-cljs](https://github.com/thheller/shadow-cljs), saving the file will re-evaluate the function as it is written in the file, removing the snitching. This may or may not be what you want to happen. (Control that save-reflex! 😀)
 
-You can also bind keys for checking the results of snitched functions and reconstruction the calls to snitched functions:
+You can also bind keys for checking the results of snitched functions and reconstruct the calls to snitched functions:
 
 ```jsonc
   {
