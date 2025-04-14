@@ -264,7 +264,7 @@ Calva has several ways you can evaluate code in the Clojure REPL automatically w
   ],
 ```
 
-Then press <kbd>cmd+enter</kbd> to get a quick-pick menu which will have the **qol: Add Snitch dependency** option. (If you're not on a mac, use some other key, e.g. <kbd>ctrl+alt+s</kbd> <kbd>enter</kbd>.)
+Then press <kbd>ctrl+alt+space</kbd> <kbd>space</kbd> to get a quick-pick menu which will have the **qol: Add Snitch dependency** option. (If you're not on a mac, use some other key, e.g. <kbd>ctrl+alt+s</kbd> <kbd>enter</kbd>.)
 
 For instrumenting a function definition to use `defn*` instead of `defn` you can define a keyboard shortcut like so:
 
@@ -280,7 +280,9 @@ For instrumenting a function definition to use `defn*` instead of `defn` you can
   },
 ```
 
-This will evaluate the funcion using `defn*` without editing the file. NB: If you are using some hot-reload tool like [shadow-cljs](https://github.com/thheller/shadow-cljs), saving the file will re-evaluate the function as it is written in the file, removing the snitching. This may or may not be what you want to happen. (Control that save-reflex! 😀)
+Now pressing <kbd>cmd+enter</kbd>, with the cursor in a `defn` form, will evaluate the funcion using `defn*` without editing the file. (If you're not on a mac, use some other key, e.g. <kbd>ctrl+alt+s</kbd> <kbd>enter</kbd>.)
+
+**NB**: If you are using some hot-reload tool like [shadow-cljs](https://github.com/thheller/shadow-cljs), saving the file will re-evaluate the function as it is written in the file, removing the snitching. This may or may not be what you want to happen. (Control that save-reflex! 😀)
 
 You can also bind keys for checking the results of snitched functions and reconstruct the calls to snitched functions:
 
