@@ -266,6 +266,10 @@ Calva has several ways you can evaluate code in the Clojure REPL automatically w
 
 Then press <kbd>ctrl+alt+space</kbd> <kbd>space</kbd> to get a quick-pick menu which will have the **qol: Add Snitch dependency** option. (If you're not on a mac, use some other key, e.g. <kbd>ctrl+alt+s</kbd> <kbd>enter</kbd>.)
 
+> Here's a Gist with the above and below Calva configuration, that PEZ tries to keep updated: https://gist.github.com/PEZ/bd4d4b88709626074293430d0b2bf14e
+
+
+
 For instrumenting a function definition to use `defn*` instead of `defn` you can define a keyboard shortcut like so:
 
 ```jsonc
