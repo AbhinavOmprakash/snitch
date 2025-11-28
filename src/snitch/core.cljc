@@ -14,14 +14,17 @@
   (let [x (cond
             (list? form) (outer (with-meta (apply list (map inner form))
                                   (meta form)))
-            (instance? clojure.lang.IMapEntry form) (outer (vec (map inner form)))
+            #?(:clj (instance? clojure.lang.IMapEntry form)
+               :cljs (implements? IMapEntry form)) (outer (vec (map inner form)))
             (seq? form) (outer (with-meta (doall (map inner form))
                                  (meta form)))
-            (instance? clojure.lang.IRecord form)
+            #?(:clj (instance? clojure.lang.IRecord form)
+               :cljs (implements? IRecord form))
             (outer (reduce (fn [r x] (conj r (inner x))) form form))
             (coll? form) (outer (into (empty form) (map inner form)))
             :else (outer form))]
-    (if (instance? clojure.lang.IObj x)
+    (if #?(:clj (instance? clojure.lang.IObj x)
+           :cljs (implements? IWithMeta x))
       (with-meta x (merge (meta form) (meta x)))
       x)))
 
@@ -77,7 +80,8 @@
 (defn with-meta*
   "Like with-meta, but doesn't throw an exception if `x` is not an object."
   [x m]
-  (if (instance? clojure.lang.IObj x)
+  (if #?(:clj (instance? clojure.lang.IObj x)
+         :cljs (implements? IWithMeta x))
     (with-meta x m)
     x))
 
@@ -283,7 +287,8 @@
                          ~@inner-body*)
 
          (merge {:snitch.core/defined-let-binding true}
-                (when (when (instance? clojure.lang.IObj body)
+                (when (when #?(:clj (instance? clojure.lang.IObj body)
+                               :cljs (implements? IWithMeta body))
                         (meta body)) (meta body)))))
 
      :else
@@ -364,7 +369,8 @@
 
                    ;; if using other destructuring syntax
                    ;; like [{:ns/keys [a b]}]
-                   (and (instance? clojure.lang.Named k)
+                   (and #?(:clj (instance? clojure.lang.Named k)
+                           :cljs (implements? INamed k))
                         (= (keyword (name k)) :keys)
                         (not (= k :keys)))
                    (values->hashmap acc (namespaced-destructuring k v))
