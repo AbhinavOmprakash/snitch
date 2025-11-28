@@ -1,32 +1,39 @@
 name: Clojure CI
-
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
+    
+    # Set up Java (required for Leiningen)
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '11'  # or '17', '21' depending on your needs
+    
+    # Install Leiningen
+    - name: Install Leiningen
+      run: |
+        wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+        chmod +x lein
+        sudo mv lein /usr/local/bin/
+        lein version
+    
     - uses: actions/setup-node@v3
       with:
         cache: 'npm'
+        
     - name: Install dependencies
       run: lein deps && npm install
-
+      
     - name: run clj tests
       run: lein test
+      
     - name: run cljs tests
       run: npm run test
-#     - name: coverage
-#       run: lein cloverage --codecov
-#     - name: Upload coverage to Codecov
-#       uses: codecov/codecov-action@v1
-#       with:
-#         token: ${{ secrets.CODECOV_TOKEN }}
-
